@@ -1,1 +1,1576 @@
-k
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Naming Tome — D&D Name Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #0c0a07;
+    --bg-card:     #131009;
+    --bg-card2:    #1a1510;
+    --bg-card3:    #100e0b;
+    --gold:        #c9a227;
+    --gold-dim:    #7a601a;
+    --gold-bright: #e8bc45;
+    --gold-pale:   #f0d888;
+    --text:        #dfc99a;
+    --text-dim:    #7a6540;
+    --text-muted:  #3e3020;
+    --border:      #2a1f10;
+    --border-glow: #4a3418;
+    --accent:      #c94040;
+    --accent-dim:  #6a2020;
+    --book-bg:     rgba(201,162,39,0.08);
+    --shadow:      rgba(0,0,0,0.8);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1.05rem;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1000; opacity: 0.4;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.65) 100%);
+    pointer-events: none; z-index: 999;
+  }
+
+  .page { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; position: relative; z-index: 1; }
+
+  /* ═══ HEADER ═══ */
+  header { text-align: center; margin-bottom: 2rem; }
+
+  .tome-eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem; letter-spacing: 0.38em;
+    color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  .tome-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.7rem, 5vw, 2.8rem);
+    font-weight: 700; color: var(--gold); line-height: 1.1;
+    text-shadow: 0 0 60px rgba(201,162,39,0.22), 0 0 18px rgba(201,162,39,0.12), 0 2px 4px rgba(0,0,0,0.8);
+    margin-bottom: 0.3rem; letter-spacing: 0.04em;
+  }
+  .tome-subtitle { font-family: 'EB Garamond', serif; font-style: italic; font-size: 0.88rem; color: var(--text-dim); margin-bottom: 1rem; }
+
+  .ornament { display: flex; align-items: center; gap: 0.7rem; justify-content: center; margin: 0.4rem 0; }
+  .ornament-line { flex: 1; max-width: 130px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); }
+  .ornament-glyph { color: var(--gold); font-size: 0.9rem; }
+
+  /* ═══ PANEL ═══ */
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1.6rem;
+    margin-bottom: 1.2rem;
+    position: relative;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.55), inset 0 1px 0 rgba(201,162,39,0.06);
+  }
+  .panel::before {
+    content: ''; position: absolute;
+    top: 4px; left: 4px; right: 4px; bottom: 4px;
+    border: 1px solid var(--text-muted); border-radius: 1px;
+    pointer-events: none; opacity: 0.25;
+  }
+  .panel::after {
+    content: '◆'; position: absolute; top: -0.52rem; left: 50%; transform: translateX(-50%);
+    color: var(--gold); font-size: 0.65rem; background: var(--bg-card); padding: 0 0.4rem; line-height: 1;
+  }
+
+  /* ═══ CONTROLS ═══ */
+  .controls-row { display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-bottom: 1rem; align-items: end; }
+
+  .control-group { display: flex; flex-direction: column; gap: 0.35rem; }
+  .control-label { font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-dim); }
+
+  select {
+    appearance: none;
+    background: var(--bg);
+    border: 1px solid var(--border-glow); color: var(--text);
+    font-family: 'EB Garamond', serif; font-size: 1rem;
+    padding: 0.55rem 2.2rem 0.55rem 0.8rem; border-radius: 1px; cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s; width: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a227' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 0.7rem center;
+  }
+  select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,162,39,0.1), 0 0 14px rgba(201,162,39,0.07); }
+  select optgroup { font-weight: 600; color: var(--text-dim); }
+
+  .gender-row { display: flex; gap: 0.45rem; }
+  .gender-btn {
+    flex: 1; background: var(--bg); border: 1px solid var(--border-glow);
+    color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 0.62rem;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 0.55rem 0.4rem; cursor: pointer; border-radius: 1px; transition: all 0.2s;
+  }
+  .gender-btn:hover { color: var(--text); border-color: var(--gold-dim); }
+  .gender-btn.active { background: rgba(201,162,39,0.1); border-color: var(--gold); color: var(--gold); box-shadow: 0 0 8px rgba(201,162,39,0.08); }
+
+  /* ═══ SPECIES INFO CARD ═══ */
+  .species-info {
+    background: var(--bg-card3);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--gold-dim);
+    padding: 0.9rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 1px;
+    display: none;
+    animation: fadeSlide 0.3s ease;
+  }
+  .species-info.visible { display: block; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .species-info-top {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 0.6rem;
+    margin-bottom: 0.5rem; flex-wrap: wrap;
+  }
+  .species-name-display {
+    font-family: 'Cinzel', serif; font-size: 0.75rem;
+    font-weight: 600; letter-spacing: 0.1em; color: var(--gold);
+  }
+  .book-badge {
+    background: var(--book-bg);
+    border: 1px solid var(--gold-dim);
+    color: var(--text-dim);
+    font-family: 'Cinzel', serif; font-size: 0.52rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 0.2rem 0.55rem; border-radius: 1px;
+    white-space: nowrap;
+  }
+  .species-description {
+    font-style: italic; font-size: 0.88rem;
+    color: var(--text); line-height: 1.55;
+    margin-bottom: 0.5rem;
+  }
+  .naming-note {
+    font-family: 'Cinzel', serif; font-size: 0.55rem;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-dim); display: flex; align-items: center; gap: 0.4rem;
+  }
+  .naming-note::before { content: '✦'; color: var(--gold-dim); font-size: 0.55rem; }
+
+  /* ═══ TOGGLES ═══ */
+  .toggles-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+
+  .toggle-item { display: flex; align-items: center; gap: 0.45rem; cursor: pointer; user-select: none; transition: opacity 0.2s; }
+  .toggle-item.available { opacity: 1; }
+  .toggle-item input[type="checkbox"] { display: none; }
+  .toggle-track { width: 2.1rem; height: 1.05rem; background: var(--bg); border: 1px solid var(--border-glow); border-radius: 0.6rem; position: relative; transition: all 0.2s; }
+  .toggle-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 0.65rem; height: 0.65rem; background: var(--text-muted); border-radius: 50%; transition: all 0.2s; }
+  .toggle-item input:checked + .toggle-track { background: rgba(201,162,39,0.12); border-color: var(--gold); }
+  .toggle-item input:checked + .toggle-track::after { background: var(--gold); transform: translateX(1.05rem); }
+  .toggle-label { font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+
+  /* ═══ GENERATE BUTTON ═══ */
+  .btn-generate {
+    width: 100%; background: transparent;
+    border: 1px solid var(--gold); color: var(--gold);
+    font-family: 'Cinzel', serif; font-size: 0.82rem;
+    font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase;
+    padding: 0.85rem 1.5rem; cursor: pointer; border-radius: 1px;
+    position: relative; overflow: hidden; transition: all 0.3s;
+  }
+  .btn-generate::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(201,162,39,0.07) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; }
+  .btn-generate:hover { background: rgba(201,162,39,0.09); box-shadow: 0 0 22px rgba(201,162,39,0.18), 0 0 8px rgba(201,162,39,0.12); letter-spacing: 0.32em; }
+  .btn-generate:hover::before { opacity: 1; }
+  .btn-generate:active { transform: scale(0.99); }
+
+  /* ═══ OUTPUT ═══ */
+  #output-panel { display: none; animation: fadeIn 0.4s ease; }
+  #output-panel.visible { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .output-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+  .section-head { display: flex; align-items: center; gap: 0.6rem; flex: 1; margin: 0; }
+  .section-head-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+  .section-head-text { font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+
+  .btn-reroll {
+    background: transparent; border: 1px solid var(--border-glow); color: var(--text-dim);
+    font-family: 'Cinzel', serif; font-size: 0.53rem; letter-spacing: 0.18em;
+    text-transform: uppercase; padding: 0.32rem 0.75rem; cursor: pointer;
+    border-radius: 1px; transition: all 0.2s; display: flex; align-items: center; gap: 0.35rem;
+  }
+  .btn-reroll:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .btn-reroll svg { width: 9px; height: 9px; }
+
+  .names-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+
+  .name-card {
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: 2px; padding: 0.75rem 0.9rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    cursor: pointer; transition: all 0.22s; position: relative;
+    animation: cardIn 0.35s ease backwards;
+  }
+  .name-card:nth-child(1){animation-delay:0.04s} .name-card:nth-child(2){animation-delay:0.08s}
+  .name-card:nth-child(3){animation-delay:0.12s} .name-card:nth-child(4){animation-delay:0.16s}
+  .name-card:nth-child(5){animation-delay:0.20s}
+
+  @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .name-card:hover { border-color: var(--gold-dim); box-shadow: 0 0 14px rgba(201,162,39,0.09); transform: translateY(-1px); }
+  .name-text { font-family: 'EB Garamond', serif; font-size: 1.04rem; font-style: italic; color: var(--text); flex: 1; line-height: 1.3; }
+
+  .name-actions { display: flex; gap: 0.3rem; opacity: 0; transition: opacity 0.18s; flex-shrink: 0; }
+  .name-card:hover .name-actions { opacity: 1; }
+
+  .action-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.72rem; padding: 0.18rem 0.28rem; border-radius: 1px; transition: color 0.18s; line-height: 1; }
+  .action-btn:hover { color: var(--gold); }
+  .action-btn.save-btn:hover { color: var(--accent); }
+
+  .copied-toast {
+    position: absolute; top: -1.8rem; left: 50%; transform: translateX(-50%);
+    background: var(--gold); color: var(--bg);
+    font-family: 'Cinzel', serif; font-size: 0.52rem; letter-spacing: 0.15em;
+    text-transform: uppercase; padding: 0.18rem 0.48rem; border-radius: 1px;
+    pointer-events: none; animation: toastUp 1.3s ease forwards; white-space: nowrap;
+  }
+  @keyframes toastUp { 0%{opacity:0;transform:translateX(-50%) translateY(4px)} 20%{opacity:1;transform:translateX(-50%) translateY(0)} 70%{opacity:1} 100%{opacity:0;transform:translateX(-50%) translateY(-4px)} }
+
+  /* ═══ SAVED ═══ */
+  #saved-panel { display: none; }
+  #saved-panel.visible { display: block; }
+  .saved-list { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+
+  .saved-tag {
+    background: var(--bg-card2); border: 1px solid var(--border-glow);
+    color: var(--text-dim); font-family: 'EB Garamond', serif; font-style: italic;
+    font-size: 0.88rem; padding: 0.28rem 0.65rem; border-radius: 1px;
+    display: flex; align-items: center; gap: 0.38rem; transition: border-color 0.18s;
+  }
+  .saved-tag:hover { border-color: var(--text-muted); }
+  .saved-tag-copy, .saved-tag-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.68rem; padding: 0; transition: color 0.18s; line-height: 1; }
+  .saved-tag-copy:hover { color: var(--gold); }
+  .saved-tag-remove:hover { color: var(--accent); }
+
+  .clear-saved { background: none; border: 1px solid var(--accent-dim); color: var(--accent-dim); font-family: 'Cinzel', serif; font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.28rem 0.55rem; cursor: pointer; border-radius: 1px; transition: all 0.18s; }
+  .clear-saved:hover { border-color: var(--accent); color: var(--accent); }
+
+  footer { text-align: center; margin-top: 3rem; color: var(--text-muted); font-size: 0.75rem; font-style: italic; }
+
+  @media (max-width: 480px) {
+    .controls-row { grid-template-columns: 1fr; }
+    .names-grid { grid-template-columns: 1fr; }
+    .tome-title { font-size: 1.55rem; }
+    .species-info-top { flex-direction: column; gap: 0.4rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <p class="tome-eyebrow">✦ Dungeons &amp; Dragons — Official Species ✦</p>
+    <h1 class="tome-title">The Naming Tome</h1>
+    <p class="tome-subtitle">For the Dungeon Master who must name the nameless — swiftly.</p>
+    <div class="ornament">
+      <div class="ornament-line"></div>
+      <span class="ornament-glyph">❧</span>
+      <div class="ornament-line"></div>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="controls-row">
+      <div class="control-group" style="flex:2">
+        <label class="control-label" for="species-select">Species</label>
+        <select id="species-select" onchange="onSpeciesChange()">
+          <optgroup label="── Player's Handbook (2024) ──">
+            <option value="aasimar">Aasimar</option>
+            <option value="dragonborn">Dragonborn</option>
+            <option value="dwarf">Dwarf</option>
+            <option value="elf">Elf</option>
+            <option value="gnome">Gnome</option>
+            <option value="goliath">Goliath</option>
+            <option value="halfling">Halfling</option>
+            <option value="human">Human</option>
+            <option value="orc">Orc</option>
+            <option value="tiefling" selected>Tiefling</option>
+          </optgroup>
+          <optgroup label="── Monsters of the Multiverse ──">
+            <option value="aarakocra">Aarakocra</option>
+            <option value="air_genasi">Air Genasi</option>
+            <option value="bugbear">Bugbear</option>
+            <option value="centaur">Centaur</option>
+            <option value="deep_gnome">Deep Gnome</option>
+            <option value="duergar">Duergar</option>
+            <option value="earth_genasi">Earth Genasi</option>
+            <option value="eladrin">Eladrin</option>
+            <option value="fairy">Fairy</option>
+            <option value="firbolg">Firbolg</option>
+            <option value="fire_genasi">Fire Genasi</option>
+            <option value="githyanki">Githyanki</option>
+            <option value="githzerai">Githzerai</option>
+            <option value="goblin">Goblin</option>
+            <option value="harengon">Harengon</option>
+            <option value="hobgoblin">Hobgoblin</option>
+            <option value="kenku">Kenku</option>
+            <option value="kobold">Kobold</option>
+            <option value="lizardfolk">Lizardfolk</option>
+            <option value="minotaur">Minotaur</option>
+            <option value="satyr">Satyr</option>
+            <option value="sea_elf">Sea Elf</option>
+            <option value="shadar_kai">Shadar-kai</option>
+            <option value="shifter">Shifter</option>
+            <option value="tabaxi">Tabaxi</option>
+            <option value="tortle">Tortle</option>
+            <option value="triton">Triton</option>
+            <option value="water_genasi">Water Genasi</option>
+            <option value="yuan_ti">Yuan-ti</option>
+          </optgroup>
+          <optgroup label="── Eberron: Forge of the Artificer ──">
+            <option value="changeling">Changeling</option>
+            <option value="kalashtar">Kalashtar</option>
+            <option value="khoravar">Khoravar (Half-Elf)</option>
+            <option value="warforged">Warforged</option>
+          </optgroup>
+          <optgroup label="── Spelljammer: Adventures in Space ──">
+            <option value="astral_elf">Astral Elf</option>
+            <option value="autognome">Autognome</option>
+            <option value="giff">Giff</option>
+            <option value="thri_kreen">Thri-kreen</option>
+          </optgroup>
+          <optgroup label="── Supplemental Sources ──">
+            <option value="dhampir">Dhampir (VRGtR)</option>
+            <option value="firbolg_wild">Firbolg (Volo's)</option>
+            <option value="half_orc">Half-Orc (PHB 2014)</option>
+            <option value="kender">Kender (Dragonlance)</option>
+            <option value="leonin">Leonin (Mythic Odysseys)</option>
+            <option value="owlin">Owlin (Strixhaven)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="control-group">
+        <label class="control-label">Gender</label>
+        <div class="gender-row">
+          <button class="gender-btn" data-gender="m" onclick="setGender('m')">M</button>
+          <button class="gender-btn" data-gender="f" onclick="setGender('f')">F</button>
+          <button class="gender-btn active" data-gender="nb" onclick="setGender('nb')">NB</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Species Info Card -->
+    <div class="species-info" id="species-info">
+      <div class="species-info-top">
+        <span class="species-name-display" id="info-name"></span>
+        <span class="book-badge" id="info-book"></span>
+      </div>
+      <p class="species-description" id="info-desc"></p>
+      <p class="naming-note" id="info-naming"></p>
+    </div>
+
+    <div class="toggles-row" id="toggles-row">
+      <label class="toggle-item" id="toggle-poetic">
+        <input type="checkbox" id="chk-poetic">
+        <span class="toggle-track"></span>
+        <span class="toggle-label">Poetic Tone</span>
+      </label>
+      <label class="toggle-item" id="toggle-harsh">
+        <input type="checkbox" id="chk-harsh">
+        <span class="toggle-track"></span>
+        <span class="toggle-label">Harsh Tone</span>
+      </label>
+      <label class="toggle-item" id="toggle-title">
+        <input type="checkbox" id="chk-title">
+        <span class="toggle-track"></span>
+        <span class="toggle-label">Add Title</span>
+      </label>
+      <label class="toggle-item" id="toggle-clan">
+        <input type="checkbox" id="chk-clan">
+        <span class="toggle-track"></span>
+        <span class="toggle-label">Clan / Family Name</span>
+      </label>
+    </div>
+
+    <button class="btn-generate" onclick="generate()">✦ &nbsp; Consult the Tome &nbsp; ✦</button>
+  </div>
+
+  <!-- Output Panel -->
+  <div class="panel" id="output-panel">
+    <div class="output-header">
+      <div class="section-head">
+        <span class="section-head-text" id="output-label">Generated Names</span>
+        <div class="section-head-line"></div>
+      </div>
+      <button class="btn-reroll" onclick="generate()">
+        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 2.5A4.5 4.5 0 1 0 11 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M8.5 1L10 2.5 8.5 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Reroll
+      </button>
+    </div>
+    <div class="names-grid" id="names-grid"></div>
+  </div>
+
+  <!-- Saved Panel -->
+  <div class="panel" id="saved-panel">
+    <div class="output-header">
+      <div class="section-head">
+        <span class="section-head-text">✦ Saved Names</span>
+        <div class="section-head-line"></div>
+      </div>
+      <button class="clear-saved" onclick="clearSaved()">Clear All</button>
+    </div>
+    <div class="saved-list" id="saved-list"></div>
+  </div>
+
+  <footer>
+    <p>Click any name to copy &nbsp;·&nbsp; ♥ to save &nbsp;·&nbsp; 46 species from official D&amp;D sources</p>
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  UTILITY
+// ═══════════════════════════════════════════════════════
+const rand  = a => a[Math.floor(Math.random() * a.length)];
+let currentGender = 'nb';
+let savedNames    = JSON.parse(localStorage.getItem('namingTome_saved') || '[]');
+
+// ═══════════════════════════════════════════════════════
+//  SPECIES DATABASE
+// ═══════════════════════════════════════════════════════
+const SPECIES = {
+
+  // ─── PHB 2024 ─────────────────────────────────────
+
+  aasimar: {
+    label: 'Aasimar', book: "Player's Handbook (2024)",
+    description: "Aasimar are mortals who carry a spark of the Upper Planes within their souls. Whether descended from angels or blessed by celestial forces, they walk the line between the divine and the mortal.",
+    namingNote: "Human-style given name · Some carry a celestial epithet bestowed at awakening",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const m  = ['Aramis','Celestian','Darien','Elyas','Joachim','Kaelius','Lior','Malachar','Nael','Oriel','Phelan','Raphiel','Seraphon','Thariel','Uriel','Valerian','Alaric','Evander'];
+      const f  = ['Aelara','Brielle','Caelith','Daeriel','Elara','Faelith','Galatea','Iorel','Jael','Kaelith','Lirel','Miriel','Oriel','Phaedra','Seraphel','Thaelith','Vaelith','Zaelith'];
+      const nb = ['Aelin','Briel','Cael','Dael','Fael','Gael','Hael','Kael','Liel','Mael','Orel','Rael','Sael','Tael','Vael','Yael'];
+      const epithets = ['the Radiant','Dawnborn','the Touched','Lightbringer','the Anointed','Celestborn','Godtouched','the Luminous'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      return rand(pool) + (opts.poetic && Math.random() < 0.4 ? `, ${rand(epithets)}` : '');
+    }
+  },
+
+  dragonborn: {
+    label: 'Dragonborn', book: "Player's Handbook (2024)",
+    description: "The ancestors of dragonborn hatched from the eggs of chromatic and metallic dragons. Imbued with draconic might, they walk the mortal world as living echoes of ancient power.",
+    namingNote: "Personal name · Optional clan name",
+    toggles: ['clan'],
+    generate(g, opts) {
+      const m   = ['Arjhan','Balasar','Bharash','Donaar','Ghesh','Heskan','Kriv','Medrash','Nadarr','Patrin','Rhogar','Shamash','Shedinn','Tarhun','Torinn','Drakan','Varroth'];
+      const f   = ['Akra','Biri','Daar','Farideh','Harann','Havilar','Jheri','Kava','Korinn','Mishann','Nala','Perra','Raiann','Sora','Surina','Thava','Uadjit'];
+      const nb  = ['Aesh','Barath','Droth','Kesith','Morath','Sharash','Torakh','Vresh','Ashen','Braxis','Draven','Korash'];
+      const clans = ['Ashscale','Brimstone','Cinderscale','Draketide','Emberfang','Firescale','Goldmaw','Ironscale','Jadecrest','Lavamaw','Obsidianwing','Pyrecrest','Thunderborn','Ruinfire'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      return rand(pool) + (opts.clan ? ` of ${rand(clans)}` : '');
+    }
+  },
+
+  dwarf: {
+    label: 'Dwarf', book: "Player's Handbook (2024)",
+    description: "Dwarves were raised from the earth in the elder days by a deity of the forge. Bold, hardy, and enduring as the stone they shape, their names resound like hammer-strikes.",
+    namingNote: "Personal name · Clan name (worn with great pride)",
+    toggles: ['clan'],
+    generate(g, opts) {
+      const starts_m = ['Bald','Bor','Brum','Dal','Dur','Eld','Fald','Grim','Helm','Keld','Mor','Nord','Thor','Ulf','Vol','Hroth','Rund','Thord'];
+      const starts_f = ['Ald','Brun','Dar','Gerd','Helm','Hild','Keld','Marg','Nord','Thrud','Urd','Birn','Sigr','Astr'];
+      const starts_nb= ['Brun','Dal','Dur','Eld','Grim','Helm','Keld','Mor','Nord','Ulf','Brim','Rand','Thur'];
+      const ends_m  = ['in','or','ak','im','un','bar','din','gar','rin','ald','und','em'];
+      const ends_f  = ['a','ra','ina','na','hild','run','dis','wyn','la'];
+      const ends_nb = ['in','or','a','ak','im','bar','din','gar','rin'];
+      const clans = ['Anvilmark','Boldbeard','Copperkettle','Deepstone','Earthmantle','Fireforge','Goldseam','Hammerfall','Ironmantle','Longbeard','Proudfist','Runestone','Stonehammer','Thunderforge','Battleborn','Deepdelve','Emberfist'];
+      const sp = g === 'm' ? starts_m : g === 'f' ? starts_f : starts_nb;
+      const ep = g === 'm' ? ends_m   : g === 'f' ? ends_f   : ends_nb;
+      const name = rand(sp) + rand(ep);
+      return name + (opts.clan ? ` ${rand(clans)}` : '');
+    }
+  },
+
+  elf: {
+    label: 'Elf', book: "Player's Handbook (2024)",
+    description: "The elves' curiosity led many of them to explore other planes of existence. Melodic and ancient, elven names flow like water over stone, carrying centuries of memory in every syllable.",
+    namingNote: "Melodic given name · Optional family name for High Elves",
+    toggles: ['poetic','clan'],
+    generate(g, opts) {
+      const first_m  = ['Ae','Syl','Mir','Thal','Ari','El','Wyn','Cael','Lor','Ith','Vel','Eld','Fae','Cor','Gil','Ael','Tar'];
+      const first_f  = ['Ae','Syl','Mir','Fae','El','Wyn','Cael','Lor','Ari','Liri','Tari','Nia','Sari','Elu','Ala','Eri'];
+      const first_nb = ['Ae','Syl','Wyn','El','Lor','Mir','Ith','Cael','Fae','Eld','Thal','Vel','Tar'];
+      const mid      = ['an','ar','ia','eth','dri','ath','ri','al','il','ir','ae','el','os'];
+      const end_m    = ['ion','arios','iel','os','wyn','dor','mir','ath','on','vel','rae'];
+      const end_f    = ['ara','iel','nia','wyn','dor','ith','mir','eth','rae','val','ia','el'];
+      const end_nb   = ['ath','ith','wyn','ael','el','iel','os','mir','eth','rae','val'];
+      const families = ['Moonshadow','Dawnwhisper','Silverleaf','Starweave','Thornvale','Ashgrove','Greymist','Ironleaf','Nightbloom','Stormveil','Windrunner','Goldenwood'];
+      const fp = g === 'm' ? first_m : g === 'f' ? first_f : first_nb;
+      const ep = g === 'm' ? end_m   : g === 'f' ? end_f   : end_nb;
+      const name = rand(fp) + (Math.random() < 0.5 ? rand(mid) : '') + rand(ep);
+      return name + (opts.clan ? ` ${rand(families)}` : '');
+    }
+  },
+
+  gnome: {
+    label: 'Gnome', book: "Player's Handbook (2024)",
+    description: "Gnomes are magical folk created by gods of invention, illusions, and life underground. Their names tumble out in enthusiastic cascades, often paired with a nickname earned through some memorable feat.",
+    namingNote: "Long given name · Often a whimsical earned nickname · Optional family name",
+    toggles: ['title'],
+    titles: {
+      m:  ['the Tinkerer','Brassfingers','Gearspring','Sparksocket','Fizzwhistle','Copperwick','the Curious','the Inventor'],
+      f:  ['the Tinkerer','Shimmerwick','Sparkwhistle','Gearspring','the Nimble','Copperwick','the Curious'],
+      nb: ['Tumblebolt','Fizzwidget','the Curious','Gearspring','Copperwick','Sparkwhistle']
+    },
+    generate(g, opts) {
+      const m  = ['Alston','Alvyn','Boddynock','Brocc','Burgell','Dimble','Eldon','Erky','Fonkin','Frug','Gerbo','Gimble','Glim','Jebeddo','Kellen','Namfoodle','Orryn','Roondar','Seebo','Sindri','Warryn','Wrenn'];
+      const f  = ['Bimpnottin','Breena','Caramip','Carlin','Donella','Duvamil','Ellyjobell','Ellywick','Lilli','Loopmottin','Lorilla','Mardnab','Nissa','Oda','Orla','Roywyn','Shamil','Tana','Waywocket','Zanna'];
+      const nb = ['Alwyn','Bizzle','Crimp','Dimble','Elfwick','Fipp','Grix','Humfrey','Izzit','Jibble','Krix','Lompwick','Mizzle','Nozz','Ozzle','Pimbly','Quip','Razzle','Spiggot'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      const name = rand(pool);
+      if (opts.title) { const tp = this.titles[g] || this.titles.nb; return `${name} "${rand(tp)}"`; }
+      return name;
+    }
+  },
+
+  goliath: {
+    label: 'Goliath', book: "Player's Handbook (2024)",
+    description: "Goliaths are distant descendants of giants and seek heights above those reached by their ancestors. They carry three names: a birth name, an earned epithet, and their clan name.",
+    namingNote: "Three-part naming: Birth name · Earned epithet · Clan name",
+    toggles: ['title'],
+    titles: {
+      m:  ['Bearkiller','Dawncaller','Fearless','Flintfinder','Horncarver','Keeneye','Lonehunter','Longleaper','Steadyhand','Twice-Orphaned','Skullcrusher','Stormcaller'],
+      f:  ['Cloudreader','Duskwalker','Fearless','Flintseeker','Graniteheart','Highclimber','Mountainborn','Peakgazer','Stonecaller','Frostweaver'],
+      nb: ['Dawncaller','Duskwalker','Fearless','Flintfinder','Highclimber','Keeneye','Loneleaper','Steadyhand','Skymover']
+    },
+    generate(g, opts) {
+      const m   = ['Aukan','Eglath','Gauthak','Ilimane','Keothi','Lo-Kag','Manneo','Maveith','Orilo','Paavu','Thatham','Uthal','Vaunea','Vimak','Thokk','Grug'];
+      const f   = ['Gae-Al','Kuori','Nalla','Pethani','Thalai','Uanea','Vaunea','Dekella','Karima','Laakea','Naala','Shaa'];
+      const nb  = ['Aukan','Eglath','Ilimane','Manneo','Maveith','Paavu','Thalai','Uthal','Vaunea'];
+      const clans = ['Anakalathai','Elanithino','Gathakanathi','Kalagiano','Kolae-Gileana','Ogolakanu','Thuliaga','Thunukalathi','Vaimei-Laga','Namanathi'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      const birth = rand(pool);
+      const clan  = rand(clans);
+      if (opts.title) { const tp = this.titles[g] || this.titles.nb; return `${birth} "${rand(tp)}" ${clan}`; }
+      return `${birth} ${clan}`;
+    }
+  },
+
+  halfling: {
+    label: 'Halfling', book: "Player's Handbook (2024)",
+    description: "Halflings possess a brave and adventurous spirit that leads them on journeys of discovery. Their names are warm and homely — the sort spoken over second breakfast and remembered fondly at the tavern.",
+    namingNote: "Given name · Family name (often homey or nature-inspired)",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Alton','Ander','Cade','Corrin','Eldon','Errich','Finn','Garret','Lindal','Lyle','Merric','Milo','Osborn','Posco','Tobold','Wellby','Roscoe','Tommen'];
+      const f  = ['Andry','Cora','Euphemia','Jillian','Kithri','Lavinia','Lidda','Merla','Neda','Paela','Portia','Seraphina','Wella','Bree','Calla','Liandra'];
+      const nb = ['Burr','Clover','Ferny','Hollow','Maple','Moss','Nettle','Pip','Reed','Robin','Rook','Rush','Thorn','Twig','Wisp','Briar'];
+      const surnames = ['Brushgather','Goodbarrel','Greenbottle','High-hill','Hilltopple','Leagallow','Tealeaf','Thorngage','Tosscobble','Underbough','Warmwater','Applebottom','Barleycorn','Dustyfoot','Fernhollow','Goldenwheat'];
+      return `${rand(g === 'm' ? m : g === 'f' ? f : nb)} ${rand(surnames)}`;
+    }
+  },
+
+  human: {
+    label: 'Human', book: "Player's Handbook (2024)",
+    description: "Found throughout the multiverse, humans are as varied as they are numerous. Their names draw from a thousand cultures, traditions, and tongues across the realms.",
+    namingNote: "Given name · Surname · Some add an honorific or title",
+    toggles: ['title'],
+    titles: {
+      m:  ['the Bold','the Wanderer','the Grey','the Scarred','the Quiet','of the Moors','Ironclad','the Unyielding'],
+      f:  ['the Swift','the Wise','of the Vale','the Stern','the Blessed','the Veiled','the Unyielding'],
+      nb: ['the Wanderer','the Grey','the Silent','of the Road','the Unseen','the Steadfast']
+    },
+    generate(g, opts) {
+      const m  = ['Aldric','Bram','Cedric','Dorian','Edmund','Flynn','Gareth','Hector','Ivan','Jasper','Kael','Leoric','Marcus','Nolan','Owen','Pierce','Roland','Soren','Tobias','Ulric','Vance','Wren','Xander'];
+      const f  = ['Alara','Brynn','Celia','Dara','Elara','Fiona','Greta','Hana','Iris','Jana','Kira','Lyra','Mara','Nora','Orla','Penna','Reva','Sera','Tara','Vera','Willa','Yara','Zora'];
+      const nb = ['Alder','Blake','Cass','Drew','Emery','Finch','Grey','Haven','Idris','Jules','Keir','Lane','Morgan','Noel','Onyx','Perry','Quinn','Rowe','Sage','Teal','Vale','Wren','Zephyr'];
+      const surnames = ['Ashwood','Brightwater','Coldwell','Drakeford','Fairweather','Graystone','Hartwell','Ironwood','Knotwood','Lindmere','Moorfield','Nightwood','Oakdale','Pendleton','Redmoor','Silverbrook','Thornfield','Underhill','Whitmore','Yorke','Aldgate','Blackwood','Crestfall','Dunmore'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      const name = `${rand(pool)} ${rand(surnames)}`;
+      return opts.title ? `${name}, ${rand(this.titles[g] || this.titles.nb)}` : name;
+    }
+  },
+
+  orc: {
+    label: 'Orc', book: "Player's Handbook (2024)",
+    description: "Orcs are equipped with gifts to help them wander great plains, vast caverns, and churning seas. Their names are earned, not given — guttural sounds that carry the weight of battle and survival.",
+    namingNote: "Single name · No traditional family name · Titles earned in combat",
+    toggles: ['harsh','title'],
+    titles: {
+      m:  ['Bone-Splitter','Iron Jaw','Blood-Drinker','Stone-Crusher','Grim-Fang','Thunder-Fist','Skull-Taker','War-Drum'],
+      f:  ['Iron-Heart','War-Mother','Blade-Singer','Death-Weaver','Storm-Eye','Red-Fist','Grim-Maw','Blood-Shaper'],
+      nb: ['Bone-Breaker','Ash-Walker','Death-Grip','Iron-Voice','Storm-Caller','Scar-Carver']
+    },
+    generate(g, opts) {
+      const starts_soft = { m:['Vor','Bol','Gur','Mog','Rak','Ug'], f:['Sh','Ar','Nak','Dak','Vel','Thr'], nb:['Vor','Nak','Bol','Mog','Rak'] };
+      const starts_hard = { m:['Kr','Gr','Druk','Zug','Brul','Grak','Thrak'], f:['Azh','Org','Gruk','Brik','Vrek','Thruk'], nb:['Kr','Sh','Zug','Druk','Gr','Th'] };
+      const mids_soft   = ['a','o','u','ar','ol','or','om'];
+      const mids_hard   = ['ak','ug','ash','uk','im','og'];
+      const ends_soft   = { m:['mar','or','gar','tok'], f:['sha','ra','ka','ira'], nb:['gar','ra','mar','tok'] };
+      const ends_hard   = { m:['th','grim','mok','bash','nak','rak'], f:['nah','kha','mar','ash'], nb:['th','grim','rak','bash'] };
+      const sPool = opts.harsh ? (starts_hard[g] || starts_hard.nb) : (starts_soft[g] || starts_soft.nb);
+      const mPool = opts.harsh ? mids_hard : mids_soft;
+      const ePool = opts.harsh ? (ends_hard[g] || ends_hard.nb) : (ends_soft[g] || ends_soft.nb);
+      let name = rand(sPool) + rand(mPool) + rand(ePool);
+      name = name.replace(/(.)\1{2,}/g,'$1$1');
+      if (opts.title) { const tp = this.titles[g] || this.titles.nb; name += ` "${rand(tp)}"`; }
+      return name;
+    }
+  },
+
+  tiefling: {
+    label: 'Tiefling', book: "Player's Handbook (2024)",
+    description: "Tieflings are either born in the Lower Planes or have fiendish ancestors who originated there. Many choose virtue names as an act of defiance, while others bear ancient infernal names passed down through cursed bloodlines.",
+    namingNote: "Virtue / concept name (single word) or ancient infernal name · Some add a family surname",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const virtues   = ['Mercy','Ruin','Silence','Dread','Solace','Hope','Malice','Spite','Grace','Sorrow','Wrath','Envy','Pride','Torment','Valor','Deceit','Fury','Shame','Glory','Regret','Scorn','Pity','Anguish','Bliss','Rancor','Devotion','Despair','Ardor'];
+      const modifiers = ['Ashen','Hollow','Sable','Vile','Bitter','Pale','Black','Crimson','Veiled','Faded','Broken','Dark','Smoldering','Forsaken','Dire','Grim','Wretched','Fell'];
+      const infernal_m = ['Akmenos','Amnon','Barakas','Damakos','Ekemon','Iados','Kairon','Leucis','Melech','Morthos','Pelaios','Skamos','Therai','Velkas'];
+      const infernal_f = ['Akta','Anis','Bryseis','Criella','Damaia','Ea','Kallista','Lerissa','Makaria','Nemeia','Orianna','Phelaia','Rieta','Saria'];
+      const infernal_nb= ['Ariel','Caim','Eligos','Lilith','Nyx','Raum','Seir','Tamiel','Xaphan','Zagan','Ose'];
+      const r = Math.random();
+      const inf = g === 'm' ? infernal_m : g === 'f' ? infernal_f : infernal_nb;
+      if (r < 0.32) return rand(virtues);
+      if (r < 0.62) return `${rand(modifiers)} ${rand(virtues)}`;
+      return rand(inf);
+    }
+  },
+
+  // ─── MONSTERS OF THE MULTIVERSE ───────────────────
+
+  aarakocra: {
+    label: 'Aarakocra', book: 'Monsters of the Multiverse',
+    description: "A winged people who originated on the Elemental Plane of Air, aarakocra soar through the sky wherever they wander. Their names are short and wind-touched, reflecting the cries and calls of their airborne lives.",
+    namingNote: "Single melodic name · No family name · Often echoes bird or wind sounds",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Aera','Errk','Heehk','Ikki','Kaw','Kleeck','Oorke','Quaf','Quierk','Urreek','Zeed','Aial','Deekek','Chiisk'];
+      const f  = ['Aera','Aial','Aur','Heehk','Ikki','Lleer','Oorke','Ouuko','Salleek','Urreek','Quaaf','Eeek'];
+      const nb = ['Aera','Aial','Aur','Errk','Heehk','Ikki','Kaw','Kleeck','Salleek','Urreek','Zeed'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  air_genasi: {
+    label: 'Air Genasi', book: 'Monsters of the Multiverse',
+    description: "Embodying the airy traits of their djinn ancestors, air genasi carry the breath of open sky within them. They often adopt names from their mortal parent's culture, flavoured with wind and storm.",
+    namingNote: "Name from mortal lineage · Often sky or wind-themed",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const m  = ['Aether','Gale','Mistral','Sirocco','Storm','Zephyr','Bolin','Foehn','Squall','Auster','Boreas','Cirrus','Nimbus','Wyndham'];
+      const f  = ['Breeze','Aerin','Galerna','Tempest','Cirra','Zara','Skyla','Misty','Aurore','Wyndara','Galia','Ventis'];
+      const nb = ['Aether','Breeze','Gale','Haze','Mist','Nimbus','Sirocco','Storm','Zephyr','Drift','Wend'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  bugbear: {
+    label: 'Bugbear', book: 'Monsters of the Multiverse',
+    description: "Despite their formidable build, bugbears are quiet skulkers who blend fey magic with brute strength. Their names are short, rough, and carry an edge — few syllables wasted.",
+    namingNote: "Single short name · No family name · Harsh consonants common",
+    toggles: ['harsh'],
+    generate(g, opts) {
+      const soft_m = ['Grol','Mosk','Targor','Durth','Kres','Muul','Tarb','Brugul'];
+      const soft_f = ['Veka','Grisel','Durga','Makka','Narga','Orga','Varka'];
+      const soft_nb= ['Grol','Mosk','Durth','Kres','Tarb'];
+      const hard_m = ['Aarb','Besk','Hrath','Narb','Orb','Rarb','Snar','Urb','Yarb','Grak','Skarg','Bruth'];
+      const hard_f = ['Hrogga','Rakka','Skarka','Targa','Urgak','Grukka','Skarva'];
+      const hard_nb= ['Hrath','Narb','Orb','Snar','Yarb','Grak','Skarg'];
+      const mp = opts.harsh ? (g==='m'?hard_m:g==='f'?hard_f:hard_nb) : (g==='m'?soft_m:g==='f'?soft_f:soft_nb);
+      return rand(mp);
+    }
+  },
+
+  centaur: {
+    label: 'Centaur', book: 'Monsters of the Multiverse',
+    description: "Centaurs gallop throughout the multiverse and trace their origins to many different realms. Their names carry the rhythm of hoofbeats — often Greek or nature-inspired, evoking open land and endless sky.",
+    namingNote: "Single strong name · May reference herd of origin",
+    toggles: ['clan'],
+    generate(g, opts) {
+      const m  = ['Brontes','Chiron','Drepan','Eurytion','Nessus','Pholus','Rhoecus','Thereus','Aegon','Dorian','Euron','Lykos','Markos','Tauros'];
+      const f  = ['Aello','Hylonome','Nessaia','Ocypete','Chalciope','Erasme','Galatea','Hippa','Kallisto','Ligeia','Melia','Nephele'];
+      const nb = ['Brontes','Aello','Eurytion','Pholus','Rhoecus','Drepan','Galatea','Hippa'];
+      const herds = ['of the Ironhoof','of Thornfield','of the Open Plains','of Stonepeak','of the Greensward'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      return rand(pool) + (opts.clan ? ` ${rand(herds)}` : '');
+    }
+  },
+
+  deep_gnome: {
+    label: 'Deep Gnome', book: 'Monsters of the Multiverse',
+    description: "Deep gnomes, or svirfneblin, are natives of the Underdark, suffused with that subterranean realm's magic. Their names are harder than their surface cousins, worn smooth by years of silence and stone.",
+    namingNote: "Given name · Some retain a clan name from their tunnel warren",
+    toggles: ['clan'],
+    generate(g, opts) {
+      const m  = ['Belwar','Daven','Duval','Fenral','Krix','Meesel','Musnol','Nabal','Nackle','Norbus','Nurpak','Pock','Prax','Scrix','Tor'];
+      const f  = ['Caramip','Donella','Duvamil','Ella','Lilly','Loopmottin','Lorilla','Mardnab','Nissa','Nyx','Oda','Orla','Rovaline','Silvy'];
+      const nb = ['Crix','Davel','Femral','Jax','Krix','Mav','Nixle','Pox','Quix','Rix','Sor','Tix'];
+      const warrens = ['Deephollow','Ironseam','Shadowvein','Stonecrypt','Underpeak','Darkvein','Gravelshaft'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      return rand(pool) + (opts.clan ? ` of ${rand(warrens)}` : '');
+    }
+  },
+
+  duergar: {
+    label: 'Duergar', book: 'Monsters of the Multiverse',
+    description: "Duergar are dwarves whose ancestors were transformed by centuries in the deepest Underdark. Grey, grim, and psychically scarred, their names echo dwarf tradition but with a harder, colder edge.",
+    namingNote: "Personal name · Clan name · Darker than hill or mountain dwarf naming",
+    toggles: ['harsh','clan'],
+    generate(g, opts) {
+      const m  = ['Thordak','Gurdek','Brimak','Horvath','Durak','Grimbal','Keldak','Mordak','Nordak','Valdak','Grauthok','Brimgor','Deldak'];
+      const f  = ['Gurdissa','Thordis','Brimhild','Mordissa','Keldis','Valdis','Gromhild','Drathild','Brunhild'];
+      const nb = ['Brimak','Durak','Grimbal','Keldak','Nordak','Brimgor','Deldak','Mordak'];
+      const clans = ['Ashdepth','Coldstone','Darkseam','Grimvault','Ironshade','Shadowmantle','Stonecrypt','Vaultborn'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      return rand(pool) + (opts.clan ? ` ${rand(clans)}` : '');
+    }
+  },
+
+  earth_genasi: {
+    label: 'Earth Genasi', book: 'Monsters of the Multiverse',
+    description: "Tracing their ancestry to dao, earth genasi inherit steadfast strength and control over stone. Their names often reflect the solidity of their element — hard, grounded, enduring.",
+    namingNote: "Name from mortal lineage · Often stone or earth-themed",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Basalt','Granite','Shale','Terra','Flint','Loam','Shard','Clay','Quartz','Slate','Crag','Ore','Vein'];
+      const f  = ['Petra','Loama','Jasper','Quartz','Terra','Silica','Garnet','Marlena','Flinta','Mina','Grena'];
+      const nb = ['Basalt','Clay','Flint','Granite','Loam','Pebble','Shale','Slate','Stone','Ore'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  eladrin: {
+    label: 'Eladrin', book: 'Monsters of the Multiverse',
+    description: "Eladrin are elves of the Feywild — a realm of perilous beauty and boundless magic. Their names flow like elven melody, but carry a seasonal resonance that shifts with their mood and the turning of the year.",
+    namingNote: "Elven melodic name · Often evokes seasons or Feywild imagery",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const seasons = { m: ['Autumn','Winter','Spring','Summer'], f: ['Autumn','Winter','Spring','Summer'], nb: ['Autumn','Winter','Spring','Summer'] };
+      const prefix_m  = ['Aer','Caer','Fael','Ith','Lor','Mel','Sar','Syl','Tar','Wyn','Ael','Cael'];
+      const prefix_f  = ['Aer','Fael','Lith','Mel','Nia','Sar','Syl','Tar','Wyn','Aela','Caeli','Elia'];
+      const prefix_nb = ['Aer','Caer','Fael','Lith','Lor','Mel','Sar','Syl','Tar','Wyn'];
+      const suffix_m  = ['ion','iel','dor','rath','mir','wyn','oth','vel'];
+      const suffix_f  = ['iel','ara','nia','ith','wyn','val','mir','ela'];
+      const suffix_nb = ['ath','iel','wyn','rae','ith','vel'];
+      const seasPfx   = opts.poetic ? `${rand(seasons[g] || seasons.nb)}'s ` : '';
+      const fp = g === 'm' ? prefix_m : g === 'f' ? prefix_f : prefix_nb;
+      const ep = g === 'm' ? suffix_m : g === 'f' ? suffix_f : suffix_nb;
+      return seasPfx + rand(fp) + rand(ep);
+    }
+  },
+
+  fairy: {
+    label: 'Fairy', book: 'Monsters of the Multiverse',
+    description: "Infused with the magic of the Feywild, fairies look like Small elves with insectile wings and a special physical characteristic that sets each apart. Their names shimmer like morning dew on gossamer.",
+    namingNote: "Whimsical nature-compound name · Single name · No family name",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const nature  = ['Bloom','Blossom','Briar','Clover','Dew','Fern','Flutter','Glimmer','Gossamer','Lark','Lilac','Mote','Nettle','Petal','Reed','Shimmer','Sorrel','Sparkle','Thistle','Twig','Wisp'];
+      const suf_m   = ['-Bright','-Brook','-Hum','-Light','-Mist','-Song','-Spark','-Thorn'];
+      const suf_f   = ['-Bell','-Dance','-Dew','-Flick','-Glow','-Shine','-Twist','-Wing'];
+      const suf_nb  = ['-Bright','-Brook','-Flick','-Glow','-Hum','-Light','-Mist','-Song','-Spark','-Wing'];
+      const sp = g === 'm' ? suf_m : g === 'f' ? suf_f : suf_nb;
+      return rand(nature) + rand(sp);
+    }
+  },
+
+  firbolg: {
+    label: 'Firbolg', book: 'Monsters of the Multiverse',
+    description: "Distant cousins of giants, firbolgs wandered the primeval forests of the multiverse. They consider their true names too sacred to share — when forced to give a name, they use a descriptor or adopted title.",
+    namingNote: "No true personal name shared · Uses titles or nature descriptors · 'Friend to Beasts', 'Walker in the Wood'",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const adj    = ['Silent','Ancient','Gentle','Hidden','Unseen','Wild','Old','Rootbound','Stoic','Quiet','Wandering','Last','Lonely','Peaceful','Vast'];
+      const noun   = ['Watcher','Walker','Keeper','Wanderer','Shepherd','Hunter','Root','Grove','Heartwood','Treespeaker','Beastfriend','Hillborn','River'];
+      const celtic_m  = ['Arryn','Brynn','Coll','Dermot','Faelar','Gwydion','Kellach','Lorcan'];
+      const celtic_f  = ['Áine','Brigid','Caoilfhinn','Deirdre','Emer','Fand','Niamh','Síle'];
+      const celtic_nb = ['Aelinn','Bran','Caol','Dair','Faol','Gael','Iolar','Saol'];
+      const r = Math.random();
+      if (r < 0.5) return `${rand(adj)} ${rand(noun)}`;
+      const pool = g === 'm' ? celtic_m : g === 'f' ? celtic_f : celtic_nb;
+      return rand(pool);
+    }
+  },
+
+  fire_genasi: {
+    label: 'Fire Genasi', book: 'Monsters of the Multiverse',
+    description: "Descended from efreet, fire genasi channel the flamboyant and often destructive nature of flame. Hot-blooded in temperament, their names ignite the air when spoken.",
+    namingNote: "Name from mortal lineage · Often fire or heat-themed",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Ignace','Pyros','Blaze','Cinder','Scorch','Brand','Flare','Char','Torch','Ash','Ember','Kindler','Pyre'];
+      const f  = ['Ashara','Pyrene','Flara','Brenna','Ember','Cimber','Soleil','Ignia','Flamma','Ardena','Sparke'];
+      const nb = ['Ash','Blaze','Char','Cinder','Ember','Flare','Scorch','Smolder','Torch','Brand'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  githyanki: {
+    label: 'Githyanki', book: 'Monsters of the Multiverse',
+    description: "Githyanki complement their physical prowess with psionic might, cultivated over eons in the Astral Plane. Fierce and militaristic, they bear a single name — sharp as the silver blades they carry.",
+    namingNote: "Single name only · No family name · Githyanki do not use surnames",
+    toggles: ['harsh'],
+    generate(g, opts) {
+      const soft_m  = ['Bel','Ela','Rath','Mez','Kvaar'];
+      const soft_f  = ['Ela','Gish','Mal','Xan','Dak','Elaith'];
+      const soft_nb = ['Bel','Vel','Gith','Rath','Kvaar'];
+      const hard_m  = ['Kith','Zar','Xan','Vrith','Jha','Zetch','Mekkar','Raaz'];
+      const hard_f  = ['Chki','Ja','Tl','Vla','Zat','Rhak','Miikyl'];
+      const hard_nb = ['Kith','Zar','Gith','Vrith','Jha'];
+      const ends_soft_m  = ['ak','os','ar','an'];
+      const ends_soft_f  = ['ith','kith','eel','ir'];
+      const ends_soft_nb = ['ith','os','ak','ar'];
+      const ends_hard_m  = ["'rak","'zar","eth","oth","'ik"];
+      const ends_hard_f  = ["'zeel","'ik","'kith","oth"];
+      const ends_hard_nb = ["'rak","'ith","'os","ael"];
+      const sp = opts.harsh ? (g==='m'?hard_m:g==='f'?hard_f:hard_nb) : (g==='m'?soft_m:g==='f'?soft_f:soft_nb);
+      const ep = opts.harsh ? (g==='m'?ends_hard_m:g==='f'?ends_hard_f:ends_hard_nb) : (g==='m'?ends_soft_m:g==='f'?ends_soft_f:ends_soft_nb);
+      return rand(sp) + rand(ep);
+    }
+  },
+
+  githzerai: {
+    label: 'Githzerai', book: 'Monsters of the Multiverse',
+    description: "Eons of cultivating their mental powers within Limbo's endless chaos have imbued githzerai with calm, psionic discipline. Unlike their githyanki kin, their names tend toward softer, more centred sounds.",
+    namingNote: "Single name only · No family name · Calmer sounds than Githyanki",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Dak','Eki','Grak','Har','Krag','Muuk','Ruz','Uun','Xan','Yak','Zar','Mith','Nak'];
+      const f  = ['Adaka','Alis','Daan','Dre','Eks','Gital','Kas','Mith','Vaash','Zala','Enas','Gith'];
+      const nb = ['Dak','Eki','Grak','Har','Krag','Muuk','Ruz','Xan','Mith','Zar'];
+      const suf_m  = ['on','ak','ur','an','ith','im'];
+      const suf_f  = ['a','aa','in','al','is','ara'];
+      const suf_nb = ['on','ak','a','an','ith','al'];
+      const sp = g === 'm' ? m : g === 'f' ? f : nb;
+      const ep = g === 'm' ? suf_m : g === 'f' ? suf_f : suf_nb;
+      return rand(sp) + rand(ep);
+    }
+  },
+
+  goblin: {
+    label: 'Goblin', book: 'Monsters of the Multiverse',
+    description: "Many goblins pursue their own destinies, escaping the plots of archfey and gods alike. Their names are quick, clipped, and often slightly absurd — like the creatures themselves.",
+    namingNote: "Single short name · No family name · Rarely more than two syllables",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Borgut','Brug','Fiz','Gob','Grix','Gurb','Krix','Lob','Mig','Nik','Nix','Pix','Rix','Snig','Tix','Zik','Wix'];
+      const f  = ['Vivi','Nissa','Bix','Frik','Gimi','Krij','Nij','Pij','Rij','Skij','Tij','Slix','Emi'];
+      const nb = ['Fiz','Gob','Grix','Krix','Lob','Mig','Nix','Pix','Rix','Snig','Tix','Wix'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  harengon: {
+    label: 'Harengon', book: 'Monsters of the Multiverse',
+    description: "Harengons are blessed with a little fey luck, finding themselves a few fortunate feet away from danger during adventures. Their names bound with energy — quick, cheerful, and touched with wanderlust.",
+    namingNote: "Given name · Family name (often meadow or nature-inspired)",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Brin','Buck','Cleve','Finn','Grey','Hob','Hops','Kip','Lop','Nib','Pip','Quick','Ruff','Scoot','Skip','Swift','Tuck','Whisk'];
+      const f  = ['Bree','Clover','Daffy','Dew','Faye','Flutter','Honey','Lark','Maeve','Meadow','Nell','Petal','Rue','Sweet','Tilly','Wren'];
+      const nb = ['Bounce','Chip','Dash','Dewdrop','Fidget','Fleet','Hop','Leap','Nip','Pounce','Quick','Skip','Trot','Tumble','Zip'];
+      const surnames = ['Blackear','Brownpaw','Cloverfield','Dawnmeadow','Dustytail','Farleap','Goldwhisker','Greathop','Longear','Moonhaven','Quickstep','Silvertail','Softpaw','Swiftfoot','Thistledown','Warmburrow'];
+      return `${rand(g === 'm' ? m : g === 'f' ? f : nb)} ${rand(surnames)}`;
+    }
+  },
+
+  hobgoblin: {
+    label: 'Hobgoblin', book: 'Monsters of the Multiverse',
+    description: "Hobgoblins trace their origins to the ancient courts of the Feywild. Disciplined and martial, they prize order and hierarchy — their names often pair with a military rank or unit designation.",
+    namingNote: "Single name · Military rank often prefixed or appended",
+    toggles: ['title'],
+    titles: {
+      m:  ['Warlord','Iron Blade','Captain','Warchief','Sergeant','the Unbroken','the Relentless'],
+      f:  ['Iron Fist','Captain','Warchief','the Unyielding','Blade-Commander','Ironscale'],
+      nb: ['Iron Blade','Captain','the Unbroken','Warchief','Commander']
+    },
+    generate(g, opts) {
+      const m  = ['Balakar','Darrak','Gorrath','Harug','Kalarach','Mograth','Rarrak','Tarrak','Varag','Zarak','Vrakh','Torrak'];
+      const f  = ['Barkara','Darraka','Gorratha','Haruga','Kalara','Mogratha','Rarraka','Tarraka','Varga','Zarka'];
+      const nb = ['Darrak','Gorrath','Harug','Kalarach','Rarrak','Tarrak','Varag','Zarak'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      const name = rand(pool);
+      return opts.title ? `${rand(this.titles[g] || this.titles.nb)} ${name}` : name;
+    }
+  },
+
+  kenku: {
+    label: 'Kenku', book: 'Monsters of the Multiverse',
+    description: "Kenku are cursed, wingless bird-people who communicate through mimicked sounds rather than original speech. They have no personal names — their 'names' are sounds associated with them by others.",
+    namingNote: "Not a name but a sound description · 'The creak of an old door' · 'Rain on cobblestones'",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const harsh   = ['The scrape of a blade','A door slamming','The snap of bone','Boots on gravel','A crow\'s alarm call','The clang of steel','A distant horn'];
+      const poetic  = ['Rain on cobblestones','Wind through ruins','The creak of a ship','A child\'s laughter','Rustling of coin','Distant temple bells','A kettle\'s whistle'];
+      const pool = opts.poetic ? poetic : [...harsh, ...poetic];
+      return rand(pool);
+    }
+  },
+
+  kobold: {
+    label: 'Kobold', book: 'Monsters of the Multiverse',
+    description: "Some of the smallest draconic creatures in the multiverse, kobolds display their draconic ancestry in the glint of their scales and their shrill battle-cries. Their names are short, sibilant, and fiercely proud.",
+    namingNote: "Single short name · No family name · Sibilant consonants common",
+    toggles: [],
+    generate(g, opts) {
+      const starts = ['Drak','Glim','Ix','Kix','Mak','Nik','Rix','Snik','Tix','Wix','Zak','Pik','Grix','Frix','Brix','Drix'];
+      const ends   = ['ix','ik','ak','ek','ox','ip','rix','lix'];
+      const single = ['Ick','Mik','Nix','Sik','Tok','Yik','Zix','Pip','Dax','Rex','Tex','Bix'];
+      return Math.random() < 0.3 ? rand(single) : rand(starts) + rand(ends);
+    }
+  },
+
+  lizardfolk: {
+    label: 'Lizardfolk', book: 'Monsters of the Multiverse',
+    description: "Gifted by the gods with remarkable physical defenses and a mystical connection to the natural world, lizardfolk possess an alien mindset. Their names are sounds — the hiss of reeds, the slap of tail on water.",
+    namingNote: "Single name · No gender distinction · No family name · Hissing syllables",
+    toggles: ['harsh'],
+    generate(g, opts) {
+      const parts1_soft = ['Shas','Rak','Ikh','Ars','Sssil','Vash'];
+      const parts2_soft = ['akha','sasha','ikha','asha','ikka','arak'];
+      const parts1_hard = ['Rrak','Ssk','Thk','Vrak','Zha','Kss','Drakh'];
+      const parts2_hard = ['isssk','thrak','rashk','akhss','sskha','vrakh'];
+      const p1 = opts.harsh ? parts1_hard : parts1_soft;
+      const p2 = opts.harsh ? parts2_hard : parts2_soft;
+      return rand(p1) + rand(p2);
+    }
+  },
+
+  minotaur: {
+    label: 'Minotaur', book: 'Monsters of the Multiverse',
+    description: "Barrel-chested humanoids with the heads of bulls, minotaurs are blessed with a supernaturally strong sense of direction. Their names carry the weight of ancient Theros, Greek and heroic in character.",
+    namingNote: "Single strong name · Greek/classical in flavour · No family name",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Asterion','Chromis','Dorian','Eurytus','Krathos','Leonid','Minos','Phanax','Tauros','Aegon','Draxis','Goreon','Lykos','Markos'];
+      const f  = ['Agathon','Belda','Chara','Dorothea','Elara','Galatea','Iphigenia','Koralia','Ligeia','Melia','Nephele','Thaleia'];
+      const nb = ['Asterion','Chromis','Dorian','Galatea','Krathos','Leonid','Phanax','Tauros'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  satyr: {
+    label: 'Satyr', book: 'Monsters of the Multiverse',
+    description: "Originating in the Feywild, satyrs thrive on the energy of merriment. Half-humanoid, half-goat, their names carry the rollicking joy of a Feywild revel — Greek-inspired, whimsical, always with a wink.",
+    namingNote: "Single name · Fey and Greek-inspired · No family name",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const m  = ['Aeolus','Bromios','Cronius','Dryos','Eleuther','Gramos','Hylas','Iolar','Kelos','Lycos','Maron','Pan','Silenus','Tyros'];
+      const f  = ['Aelara','Bryme','Chloris','Dryade','Elara','Flora','Glycera','Hyale','Iantha','Kalista','Lyra','Melia','Thalia'];
+      const nb = ['Bromios','Cronius','Dryos','Eleuther','Gramos','Hylas','Lycos','Thalia'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  sea_elf: {
+    label: 'Sea Elf', book: 'Monsters of the Multiverse',
+    description: "Sea elves fell in love with the wild beauty of the ocean in the earliest days of the multiverse. Their names flow like elven melody but carry the rhythms of tides and deep water.",
+    namingNote: "Elven-style given name · Often aquatic or oceanic resonance · Optional family name",
+    toggles: ['clan'],
+    generate(g, opts) {
+      const first_m  = ['Aer','Cael','Dri','Elar','Fael','Ith','Lor','Mir','Nael','Sel','Syl','Tor','Wyn','Ael'];
+      const first_f  = ['Aer','Cael','Elia','Fael','Ilia','Lith','Mel','Nia','Sel','Syl','Tal','Wyn','Aela'];
+      const first_nb = ['Aer','Cael','Fael','Lith','Lor','Mel','Nia','Sel','Syl','Wyn'];
+      const end_m    = ['ion','iel','dor','rath','mir','wyn','an','vel'];
+      const end_f    = ['ara','iel','nia','wyn','ith','val','ela'];
+      const end_nb   = ['ath','iel','wyn','rae','ith'];
+      const surnames = ['Driftmere','Coralweave','Tideborn','Deepwave','Saltsong','Brinecrest','Shallowmere','Riptide','Seafoam'];
+      const fp = g === 'm' ? first_m : g === 'f' ? first_f : first_nb;
+      const ep = g === 'm' ? end_m   : g === 'f' ? end_f   : end_nb;
+      return rand(fp) + rand(ep) + (opts.clan ? ` ${rand(surnames)}` : '');
+    }
+  },
+
+  shadar_kai: {
+    label: 'Shadar-kai', book: 'Monsters of the Multiverse',
+    description: "Once Feywild elves, shadar-kai now exist in a state between life and death, transformed by the Shadowfell. Their names retain elven melody but have grown darker — edges worn away by shadow and sorrow.",
+    namingNote: "Elven-style name · Shorter and darker than standard elven · Shadowfell influences",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const m  = ['Arath','Doran','Harath','Keral','Merath','Norath','Peral','Reval','Soral','Teral','Vorath','Zeral','Calrath'];
+      const f  = ['Ara','Dara','Kara','Mara','Nara','Para','Sara','Tara','Vala','Zara','Elara','Cala'];
+      const nb = ['Arath','Dara','Harath','Keral','Mara','Norath','Reval','Soral'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  shifter: {
+    label: 'Shifter', book: 'Monsters of the Multiverse',
+    description: "Humanoids with a bestial aspect, shifters descend from those who contracted lycanthropy. They can temporarily enhance their animalistic features — their names are equally primal: short, strong, often single syllable.",
+    namingNote: "Short single name · Primal and bestial quality · No family name",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Ash','Bark','Briar','Buck','Crag','Drake','Fang','Flint','Frost','Hawk','Heath','Hunt','Iron','Kite','Lash','Marsh','Pike','Roan','Scar','Slate','Stone','Storm','Wolf'];
+      const f  = ['Bear','Brisk','Chase','Clove','Dart','Dawn','Drift','Ember','Fern','Gale','Jade','Mist','Reed','Ryn','Sage','Sleek','Snap','Swift','Thorn','Vale','Wisp'];
+      const nb = ['Ash','Bear','Briar','Chase','Crag','Drift','Ember','Fang','Flint','Frost','Jade','Mist','Pike','Scar','Slate','Stone'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  tabaxi: {
+    label: 'Tabaxi', book: 'Monsters of the Multiverse',
+    description: "Created by the Cat Lord to blend the qualities of humanoids and cats, tabaxi are a varied people in both attitude and appearance. Their names are poetic descriptors bestowed by their clan — an evocative snapshot of a moment or omen.",
+    namingNote: "Poetic descriptor · Functions as both given and clan name · No separate family name",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const pfx_m  = ['Claw','Torn-Ear','Iron-Paw','Shadow','Broken-Tooth','Ember','Ash','Storm','Fang','Rust','Scar','Grim'];
+      const pfx_f  = ['Whisper','Soft-Step','Silver','Moonrise','Bright-Eye','Silk','Dusk','Ghost','Mist','Dawn','Starfall'];
+      const pfx_nb = ['Pale','Cinder','Smoke','Stone','Drift','Echo','Hush','Veil','Gloom','Tide','Ash','Hollow'];
+      const conn   = ['of','on','in','beneath','above','within','beyond','upon','through','under'];
+      const suf    = ['Quiet Stone','Falling Ash','Morning Dew','Red Sand','Glass Water','Dying Embers','Pale Moon','Cracked Bone','Still Water','Dark Forest','Bright Flame','Cold Wind','Lost River','Silent Rain','Distant Thunder','Bleeding Sky','Wet Stone','Last Ember','Fading Light','Charred Wood','Open Sky','Hollow Wind'];
+      const pool = g === 'm' ? pfx_m : g === 'f' ? pfx_f : pfx_nb;
+      return `${rand(pool)} ${rand(conn)} ${rand(suf)}`;
+    }
+  },
+
+  tortle: {
+    label: 'Tortle', book: 'Monsters of the Multiverse',
+    description: "Carrying their shelter on their backs gives tortles a special feeling of security wherever they go. Slow to speak but deep of spirit, their names are simple and deliberate — often just two or three syllables.",
+    namingNote: "Short single name · No family name · Simple, unhurried sounds",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Aranck','Baka','Bubak','Cidrick','Dolyn','Egg','Felo','Frog','Garros','Gunda','Hawk','Marto','Peng','Shell','Torco'];
+      const f  = ['Aja','Ana','Chandra','Damara','Delphi','Dora','Fedra','Gala','Haly','Inga','Mira','Nala','Penna','Shella'];
+      const nb = ['Aranck','Baka','Cidrick','Egg','Frog','Gunda','Hawk','Marto','Peng','Shell'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  triton: {
+    label: 'Triton', book: 'Monsters of the Multiverse',
+    description: "Over time, tritons have extended their stewardship over the sea floor to the ocean's surface. Noble and proud, their names flow with the cadence of deep ocean currents — Latin and aquatic in character.",
+    namingNote: "Single melodic name · No family name · May reference home sea",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Aestor','Caspian','Dorian','Helias','Korin','Leander','Nautios','Peridos','Rythian','Sidon','Thalios','Vardan','Wylon'];
+      const f  = ['Ariel','Coral','Delara','Eriana','Halia','Kelpara','Marina','Naliya','Neria','Periana','Sirenia','Thalassa','Wavara'];
+      const nb = ['Aestor','Ariel','Caspian','Delara','Dorian','Eriana','Helias','Marina','Nautios','Peridos'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  water_genasi: {
+    label: 'Water Genasi', book: 'Monsters of the Multiverse',
+    description: "Water genasi are perfectly suited to life underwater, carrying the power of waves inside themselves. Their names often draw from their mortal lineage, with a fluid, oceanic resonance.",
+    namingNote: "Name from mortal lineage · Often water or ocean-themed",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Aquan','Brook','Reef','Torrent','Eddy','Cove','Tide','Drain','Surge','Gulf','Deeps','Current','Brine'];
+      const f  = ['Marina','Cove','Tide','Dew','Brine','Pearl','Naiad','Coral','Wavern','Salina','Marina','Tridia'];
+      const nb = ['Brook','Dew','Eddy','Flood','Gulf','Mist','Rain','Reef','Surge','Tide','Current'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  yuan_ti: {
+    label: 'Yuan-ti', book: 'Monsters of the Multiverse',
+    description: "Blessed with resistance to magical and poisonous effects, yuan-ti manifest their serpentine heritage in a variety of ways. Ancient and cold, their names hiss and slide through the air like serpents through grass.",
+    namingNote: "Single serpentine name · Ancient, hissing quality · No family name",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Esk','Ossaviar','Sethas','Sethek','Sskath','Sythar','Vaesseth','Zalthar','Thessaly','Nassek','Sythek','Ossek','Vaath'];
+      const f  = ['Ashaliss','Eshar','Issha','Melek','Neyra','Serthis','Sseth','Thessa','Vissha','Aassha','Nassira','Sythala'];
+      const nb = ['Esk','Ashaliss','Ossaviar','Sethas','Sskath','Vaesseth','Zalthar','Thessaly'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  },
+
+  // ─── EBERRON: FORGE OF THE ARTIFICER ──────────────
+
+  changeling: {
+    label: 'Changeling', book: 'Eberron: Forge of the Artificer',
+    description: "With ever-changing appearances, changelings reside in many societies undetected. A 'true' changeling name is a chosen identity — simple, fluid, easy to set aside. They may carry many aliases.",
+    namingNote: "Single chosen name · No family name · Often neutral and fluid",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const chosen = ['Alix','Ash','Blur','Cyan','Dash','Echo','Fade','Grey','Haze','Iris','Jade','Kin','Lace','Mist','Opal','Pearl','Reed','Shift','Silk','Slide','Smoke','Twist','Veil','Wane','Wisp','None','Husk','Vex','Shim','Clay','Flow','Seam'];
+      return rand(chosen);
+    }
+  },
+
+  kalashtar: {
+    label: 'Kalashtar', book: 'Eberron: Forge of the Artificer',
+    description: "Kalashtar are created from the union of humanity and renegade quori spirits from the plane of dreams. Their names blend quori syllables with the human name of their bonded ancestor.",
+    namingNote: "Quori-influenced name · Male names often end in -harath, -kashtai · Female in -ara, -ini · Single name",
+    toggles: [],
+    generate(g, opts) {
+      const pre_m   = ['Duro','Hava','Lanka','Min','Nymm','Rol','Thaar','Tolo','Ulkar','Zil'];
+      const suf_m   = ['harath','kashtai','melk','thosk','nek','kaan'];
+      const pre_f   = ['Ana','Dana','Hava','Kalan','Lana','Mel','Nara','Sana','Tela','Zur'];
+      const suf_f   = ['ara','ini','leena','dith','rashk','kashtai'];
+      const pre_nb  = ['Eka','Jha','Lava','Mish','Nak','Oras','Sel','Tal','Ven','Zal'];
+      const suf_nb  = ['an','ara','ith','melk','harath','dith'];
+      const prePool = g === 'm' ? pre_m : g === 'f' ? pre_f : pre_nb;
+      const sufPool = g === 'm' ? suf_m : g === 'f' ? suf_f : suf_nb;
+      return rand(prePool) + rand(sufPool);
+    }
+  },
+
+  khoravar: {
+    label: 'Khoravar (Half-Elf)', book: 'Eberron: Forge of the Artificer',
+    description: "Over centuries, those descended from both humans and elves have developed their own communities and traditions in Khorvaire. Khoravar blend two naming heritages — sometimes elven, sometimes human, sometimes entirely their own.",
+    namingNote: "May blend elven and human naming · First + last name · Family varies by upbringing",
+    toggles: ['clan'],
+    generate(g, opts) {
+      const elf_m  = ['Ae','Syl','Mir','Ari','El','Wyn','Cael','Lor'];
+      const elf_f  = ['Ae','Syl','Fae','El','Wyn','Liri','Nia'];
+      const elf_nb = ['Ae','Syl','Wyn','El','Lor','Mir'];
+      const elf_end_m  = ['ion','iel','os','wyn','dor'];
+      const elf_end_f  = ['ara','iel','nia','wyn','ith'];
+      const elf_end_nb = ['ath','iel','wyn','ael'];
+      const human_m  = ['Aldric','Bram','Cedric','Gareth','Marcus','Nolan','Tobias'];
+      const human_f  = ['Brynn','Celia','Dara','Elara','Kira','Lyra','Nora'];
+      const human_nb = ['Blake','Cass','Drew','Emery','Finch','Grey','Jules'];
+      const surnames_elf = ['Moonshadow','Silverleaf','Starweave','Greymist','Nightbloom'];
+      const surnames_human = ['Ashwood','Graystone','Hartwell','Thornfield','Whitmore'];
+      const r = Math.random();
+      let first;
+      if (r < 0.4) {
+        const fp = g === 'm' ? elf_m : g === 'f' ? elf_f : elf_nb;
+        const ep = g === 'm' ? elf_end_m : g === 'f' ? elf_end_f : elf_end_nb;
+        first = rand(fp) + rand(ep);
+      } else {
+        first = rand(g === 'm' ? human_m : g === 'f' ? human_f : human_nb);
+      }
+      const surname = opts.clan ? (Math.random() < 0.5 ? rand(surnames_elf) : rand(surnames_human)) : '';
+      return first + (surname ? ` ${surname}` : '');
+    }
+  },
+
+  warforged: {
+    label: 'Warforged', book: 'Eberron: Forge of the Artificer',
+    description: "Warforged are mechanical beings built as weapons to fight in the Last War. Some bear the designation of their creation; others have chosen a name for themselves — often a single weighty concept that defines who they are beyond war.",
+    namingNote: "Designation (House-Function-Number) or single chosen concept word · No family name",
+    toggles: [],
+    generate(g, opts) {
+      const chosen  = ['Bastion','Broken','Bulwark','Cog','Fallen','Forge','Found','Garrison','Grim','Herald','Hope','Iron','Lament','Last','Lost','March','Mercy','Notch','Ruin','Seven','Shield','Siege','Sorrow','Stitch','Torch','Tower','Victor','Vigil','Ward','Watch','Whisper','Null'];
+      const houses  = ['Cannith','Iron','Steel','Brass','Copper','Gold','Onyx','Silver','Adamant'];
+      const funcs   = ['Strike','Shield','Scout','Ward','Blade','Mend','Forge','Watch','Guard','Hunt'];
+      const nums    = ['III','IV','VII','XI','Three','Seven','Eleven','Forty-Two','One-Hundred','the First','the Last'];
+      const r = Math.random();
+      if (r < 0.5)  return rand(chosen);
+      if (r < 0.75) return `${rand(houses)}-${rand(funcs)}-${rand(nums)}`;
+      return `${rand(houses)} ${rand(chosen)}`;
+    }
+  },
+
+  // ─── SPELLJAMMER ──────────────────────────────────
+
+  astral_elf: {
+    label: 'Astral Elf', book: 'Spelljammer: Adventures in Space',
+    description: "Groups of elves ventured from the Feywild to the Astral Plane to be closer to their gods. Life in the Silver Void has imbued their souls with a spark of divine light — and a slight strangeness to their ancient names.",
+    namingNote: "Elven naming with celestial or astral overtones · Optional divine epithet",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const first_m  = ['Aethar','Caelion','Daeriel','Elyon','Faelos','Itharian','Lhorvael','Mirathos','Naevius','Solaer','Tharion'];
+      const first_f  = ['Aethara','Caelia','Daerith','Elynia','Faelith','Ithariel','Lhorvael','Mirael','Naeviel','Solaera','Thariel'];
+      const first_nb = ['Aethar','Caelion','Daeriel','Elyon','Faelos','Itharian','Mirael','Solaer'];
+      const epithets = ['Star-touched','of the Silver Void','the Eternal','Void-born','of the Astral Sea','Heaven-scarred'];
+      const pool = g === 'm' ? first_m : g === 'f' ? first_f : first_nb;
+      return rand(pool) + (opts.poetic ? `, ${rand(epithets)}` : '');
+    }
+  },
+
+  autognome: {
+    label: 'Autognome', book: 'Spelljammer: Adventures in Space',
+    description: "Autognomes are mechanical beings built by gnomes, sometimes becoming separated from their creators and developing a life of their own. They may carry their creator's name, a designation, or an adopted identity.",
+    namingNote: "Creator's name + serial designation, or a chosen gnome-style name after gaining independence",
+    toggles: [],
+    generate(g, opts) {
+      const creators = ['Alston','Alvyn','Boddynock','Eldon','Fonkin','Gerbo','Gimble','Namfoodle','Orryn','Seebo','Sindri'];
+      const designations = ['Mk.IV','Mk.VII','1-Alpha','3-Beta','Mark II','Rev.5','Edition Three','Model IX'];
+      const chosen = ['Click','Cog','Gear','Hatch','Lever','Notch','Ratchet','Spark','Spring','Ticker','Valve','Whirr','Widget'];
+      const r = Math.random();
+      if (r < 0.4) return `${rand(creators)}-${rand(designations)}`;
+      if (r < 0.7) return rand(chosen);
+      return `${rand(creators)}'s ${rand(chosen)}`;
+    }
+  },
+
+  giff: {
+    label: 'Giff', book: 'Spelljammer: Adventures in Space',
+    description: "As beings of impressive size and unforgettable appearance — hippofolk in plate armour — giff are noticed wherever they go. Militaristic to their core, their names carry rank and regimental pride.",
+    namingNote: "Military rank + given name · Regimental name sometimes appended",
+    toggles: ['title'],
+    titles: {
+      m:  ['Sergeant','Captain','Colonel','Major','Commander','Corporal','Lieutenant','Admiral'],
+      f:  ['Sergeant','Captain','Colonel','Major','Commander','Corporal','Lieutenant','Admiral'],
+      nb: ['Sergeant','Captain','Colonel','Major','Commander','Corporal','Lieutenant']
+    },
+    generate(g, opts) {
+      const m  = ['Brasswick','Flinch','Grapeshot','Gunner','Hammerhead','Ironside','Mace','Pistol','Powder','Ramrod','Salvo','Shot','Slug','Volley','Buckram'];
+      const f  = ['Broadside','Buckshot','Cannon','Flash','Flintlock','Hammer','Lockpick','Musket','Ram','Salvo','Trigger','Volley','Bayonet'];
+      const nb = ['Brasswick','Broadside','Cannon','Flinch','Grapeshot','Hammerhead','Ironside','Mace','Pistol','Powder','Shot'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      const rank = rand(this.titles[g] || this.titles.nb);
+      return opts.title ? `${rank} ${rand(pool)}` : rand(pool);
+    }
+  },
+
+  thri_kreen: {
+    label: 'Thri-kreen', book: 'Spelljammer: Adventures in Space',
+    description: "Thri-kreen speak by clacking their mandibles and waving their antennae — sounds difficult for other races to reproduce. Their 'names' to outsiders are rough transliterations of chittering clicks.",
+    namingNote: "Click-pattern transliteration · No family name · Sounds like mandible-clatter",
+    toggles: [],
+    generate(g, opts) {
+      const clicks = ['Ch\'trik','Ka\'chak','Thik-thik','Kri-kri','Zrr\'ak','Chkk-ta','Xt\'kra','T\'chik','Kak\'reth','Cht\'ra','Xk\'tar','Tk\'resh'];
+      return rand(clicks);
+    }
+  },
+
+  // ─── SUPPLEMENTAL SOURCES ─────────────────────────
+
+  dhampir: {
+    label: 'Dhampir', book: "Astarion's Book of Hungers / Van Richten's Guide",
+    description: "Dhampirs are living people who possess vampiric prowess but are cursed with macabre hunger. They carry the name of their mortal origin — often gothic, aristocratic, or drawn from old eastern European traditions.",
+    namingNote: "Name from mortal origin culture · Gothic or aristocratic quality",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const m  = ['Aldric','Bastian','Corvin','Dorian','Edric','Feodor','Gregor','Hadrian','Ivan','Lucian','Malachar','Nikolai','Octavian','Roderick','Sebastian','Valerian'];
+      const f  = ['Adara','Bianca','Cassilda','Dorothea','Elara','Faye','Greta','Heloise','Irina','Lenora','Mira','Natasha','Octavia','Rosamund','Serafina','Valeria'];
+      const nb = ['Alix','Basil','Caius','Dorian','Emeric','Falin','Gregor','Hadley','Idris','Luca','Moro','Noel','Onyx','Sable','Vesper'];
+      const epithets = ['of the Bloodline','the Half-Living','the Accursed','Nightborn','Duskwalker'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      return rand(pool) + (opts.poetic ? ` ${rand(epithets)}` : '');
+    }
+  },
+
+  firbolg_wild: {
+    label: 'Firbolg (Volo\'s)', book: "Volo's Guide to Monsters",
+    description: "Firbolg tribes cloister in remote forest strongholds, preferring quiet harmony with the woods. Like their MMotM counterparts, they consider personal names too sacred to share with outsiders.",
+    namingNote: "No true personal name shared · Uses descriptors or adopted titles · 'Keeper of the Root', 'Old Branch'",
+    toggles: ['poetic'],
+    generate(g, opts) {
+      const adj  = ['Silent','Ancient','Gentle','Hidden','Wild','Old','Rootbound','Stoic','Quiet','Wandering','Last','Lonely','Vast','Gnarled'];
+      const noun = ['Watcher','Walker','Keeper','Wanderer','Shepherd','Hunter','Root','Grove','Heartwood','Treespeaker','Beastfriend','Hillborn'];
+      const celtic_m  = ['Arryn','Brynn','Coll','Dermot','Gwydion','Kellach','Lorcan','Taran'];
+      const celtic_f  = ['Áine','Brigid','Deirdre','Emer','Fand','Niamh','Síle','Tara'];
+      const celtic_nb = ['Aelinn','Bran','Caol','Dair','Faol','Gael','Iolar'];
+      const r = Math.random();
+      if (r < 0.5) return `${rand(adj)} ${rand(noun)}`;
+      const pool = g === 'm' ? celtic_m : g === 'f' ? celtic_f : celtic_nb;
+      return rand(pool);
+    }
+  },
+
+  half_orc: {
+    label: 'Half-Orc', book: "Player's Handbook (2014)",
+    description: "Some half-orcs rise to become proud leaders of orc communities. Others venture into the world to prove their worth. Their names may be orcish in origin, human, or a deliberate blend of both heritages.",
+    namingNote: "May use orc naming or the culture they were raised in · First name or single name",
+    toggles: ['title','harsh'],
+    titles: {
+      m:  ['the Bold','the Scarred','Iron-Jaw','the Relentless','Thunder-Fist'],
+      f:  ['the Fierce','Iron-Heart','the Unyielding','War-Mother','Blade-Singer'],
+      nb: ['the Wanderer','the Scarred','Iron-Voice','the Relentless']
+    },
+    generate(g, opts) {
+      const orc_m   = ['Krogar','Bruguk','Thraktum','Gorzug','Volrak','Mogrug','Drathuk','Urgor'];
+      const orc_f   = ['Shagna','Arnak','Gursha','Makka','Vrekka','Darga','Orsha'];
+      const orc_nb  = ['Krash','Grumak','Volrak','Narbok','Skarag','Drathuk'];
+      const orc_hard_m  = ['Krauth','Grimbash','Thrakmok','Gorzugrim','Volrakh','Drukthar','Urgorgrim'];
+      const orc_hard_f  = ['Shagnakh','Gurkhasha','Makkrath','Vrekkash','Dargash'];
+      const orc_hard_nb = ['Krauthak','Grimbash','Volgrim','Narbokthar','Skarakk'];
+      const human_m  = ['Bram','Gareth','Marcus','Tobias','Flynn','Owen'];
+      const human_f  = ['Mara','Lyra','Elara','Nora','Brynn','Sera'];
+      const human_nb = ['Blake','Grey','Sage','Finch','Wren','Ash'];
+      let name;
+      if (opts.harsh || Math.random() < 0.5) {
+        const pool = opts.harsh
+          ? (g==='m'?orc_hard_m:g==='f'?orc_hard_f:orc_hard_nb)
+          : (g==='m'?orc_m:g==='f'?orc_f:orc_nb);
+        name = rand(pool);
+      } else {
+        name = rand(g==='m'?human_m:g==='f'?human_f:human_nb);
+      }
+      return opts.title ? `${name} ${rand(this.titles[g] || this.titles.nb)}` : name;
+    }
+  },
+
+  kender: {
+    label: 'Kender', book: 'Dragonlance: Shadow of the Dragon Queen',
+    description: "Kender have a supernatural curiosity that drives them to adventure. Native to Krynn, their names are cheerful and whimsical — they seem physically incapable of being sinister.",
+    namingNote: "Given name · Family name (whimsical, often compounded from objects) · Tasslehoff-style",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Binkle','Chipwick','Crimple','Dinkle','Fender','Finkel','Fitch','Fizz','Fumble','Fuss','Gamble','Giggle','Gippet','Grick','Grimble','Tasslehoff','Tomas','Brandly'];
+      const f  = ['Amber','Bindi','Bindle','Bliss','Candy','Crissle','Crystal','Doodle','Fizz','Frizz','Giggle','Lemon','Maple','Merry','Rosie','Tika','Willowmint'];
+      const nb = ['Bumble','Chuckle','Dazzle','Frazzle','Fuddle','Jumble','Muddle','Noodle','Pebble','Puddle','Ramble','Riddle','Rumble','Tangle','Tumble','Wander','Wobble'];
+      const surnames = ['Burrfoot','Copperkettle','Doodlewick','Fussbudget','Happenstance','Leafdancer','Mumblethumb','Nonsensical','Pennywhistle','Quickfingers','Rumblewick','Shortwick','Stumblefoot','Thistleknot','Tossedhat','Wanderfuss'];
+      return `${rand(g === 'm' ? m : g === 'f' ? f : nb)} ${rand(surnames)}`;
+    }
+  },
+
+  leonin: {
+    label: 'Leonin', book: 'Mythic Odysseys of Theros',
+    description: "Nomadic, lion-like humanoids who rarely interact with other peoples, having all they need in their shimmering homeland of Oreskos. Their names carry Greek power, pride, and the rumble of a coming storm.",
+    namingNote: "Single Greek-style name · Pride affiliation may be appended · No family name",
+    toggles: ['clan'],
+    generate(g, opts) {
+      const m  = ['Aesop','Ajax','Alexandros','Aristotle','Demetrios','Ikaros','Kostas','Leonidas','Nikolaos','Orion','Pericles','Sokrates','Theron','Tyrannus'];
+      const f  = ['Agatha','Aspasia','Athena','Callia','Daphne','Electra','Harmonia','Helena','Kaisa','Lykaios','Phoebe','Selena','Zoe'];
+      const nb = ['Aesop','Agatha','Aristotle','Electra','Ikaros','Kostas','Leonidas','Orion','Phoebe','Theron'];
+      const prides = ['of the Golden Mane','of Tethret','of Oreskos','of the Plains','Sunmane Pride','Ironfang Pride'];
+      const pool = g === 'm' ? m : g === 'f' ? f : nb;
+      return rand(pool) + (opts.clan ? `, ${rand(prides)}` : '');
+    }
+  },
+
+  owlin: {
+    label: 'Owlin', book: 'Strixhaven: A Curriculum of Chaos',
+    description: "Like owls, owlin move with feathers that make no sound — easy to sneak up on you in the library. Scholars and mystics, their names lean toward the academic and the quietly arcane.",
+    namingNote: "Single name · Scholarly or nature-inspired · No family name",
+    toggles: [],
+    generate(g, opts) {
+      const m  = ['Aebek','Boreas','Corvin','Ekko','Featherstone','Gort','Hooton','Jasper','Killian','Lorcan','Melvyn','Newton','Oswin','Tawny','Wendell'];
+      const f  = ['Aella','Brix','Celesta','Delia','Featherill','Gilda','Helena','Iris','Jola','Kestrella','Lark','Melody','Nesta','Olette','Tara'];
+      const nb = ['Aebek','Aella','Boreas','Corvin','Delia','Featherstone','Gort','Iris','Jasper','Lark','Melvyn','Newton','Nesta','Tawny'];
+      return rand(g === 'm' ? m : g === 'f' ? f : nb);
+    }
+  }
+
+};
+
+// ═══════════════════════════════════════════════════════
+//  UNIVERSAL FALLBACK POOLS
+// ═══════════════════════════════════════════════════════
+const UNIVERSAL_TITLES = {
+  m:  ['the Bold','the Wanderer','the Grey','the Scarred','the Unyielding','the Quiet','Ironclad','the Last'],
+  f:  ['the Wise','the Swift','the Stern','the Blessed','the Veiled','the Unyielding','the Fierce'],
+  nb: ['the Unseen','the Silent','the Steadfast','the Grey','the Wanderer','the Steadfast','the Undying']
+};
+const UNIVERSAL_CLANS = {
+  pool:   ['Ashwood','Brightwater','Coldwell','Graystone','Ironwood','Thornfield','Nightwood','Silverbrook','Redmoor','Whitmore','Dawnmere','Blackpeak'],
+  prefix: ''
+};
+
+// Per-species title/clan pools for species whose generate() doesn't handle them
+const EXTRA = {
+  aasimar:     { titles:{m:['the Radiant','Dawnborn','Lightbringer','the Anointed','Godtouched'],f:['the Radiant','Dawnborn','Lightbringer','the Blessed','Starborn'],nb:['Dawnborn','the Touched','Godtouched','the Luminous']}, clans:{pool:['House Velamir','Order of the Dawn','the Solari Lineage','the Radiant Blood'],prefix:'of'} },
+  dragonborn:  { titles:{m:['Flamecaller','the Draconic','Scale-sworn','Breath of Ruin','the Ancient'],f:['Flamecaller','the Draconic','Scale-sworn','Breath of Fire','the Terrible'],nb:['the Draconic','Scale-sworn','Breath of Ash','Dragonkin']}, clans:null },
+  dwarf:       { titles:{m:['the Unyielding','Ironborn','the Deep','Stone-sworn','the Elder'],f:['the Unyielding','Ironborn','the Deep','Stone-sworn','the Elder'],nb:['the Unyielding','Ironborn','the Deep','Stone-sworn']}, clans:null },
+  elf:         { titles:{m:['the Ancient','Starweave','Moonborn','the Timeless','Dawnwalker'],f:['the Ancient','Starweave','Moonborn','the Timeless','Dawnwalker'],nb:['the Ancient','Starweave','the Timeless','Dawnwalker']}, clans:null },
+  tiefling:    { titles:{m:['the Fallen','Ember-born','the Forsaken','Hell-touched','the Damned'],f:['the Fallen','Ember-born','the Forsaken','Hell-touched','the Cursed'],nb:['the Fallen','Ember-born','the Forsaken','Hell-touched']}, clans:{pool:['of House Malphas','of the Ashen Line','the Infernal Descent','of the Old Pact'],prefix:''} },
+  aarakocra:   { titles:{m:['Storm-Caller','the Swift','High-Wind','Sky-born','Wind-dancer'],f:['Storm-Caller','the Swift','High-Wind','Cloud-born','Wind-singer'],nb:['Storm-Caller','the Swift','High-Wind','Sky-born']}, clans:{pool:['Storm-Peak Aerie','High-Wind Flock','Open-Sky Band','Cloud-Crest Nest','Far-Gale Wing'],prefix:'of'} },
+  air_genasi:  { titles:{m:['the Windborn','Gale-touched','Stormwalker','the Breathless','Sky-sworn'],f:['the Windborn','Gale-touched','Stormwalker','the Breathless','Sky-sworn'],nb:['the Windborn','Gale-touched','Stormwalker','the Breathless']}, clans:{pool:['Mistral Lineage','the Stormblood','House Aether','Wind-Kin'],prefix:'of'} },
+  bugbear:     { titles:{m:['the Unseen','Shadowclaw','Nightcreeper','the Silent','the Feared'],f:['the Unseen','Shadowclaw','Nightcreeper','the Silent','the Feared'],nb:['the Unseen','Shadowclaw','the Silent']}, clans:{pool:['Nightstalker Tribe','Shadowcreep Clan','Bonecrusher Clan','Dark-Hollow Band','the Unseen'],prefix:'of'} },
+  centaur:     { titles:{m:['the Swift','Iron-hoof','the Fierce','Plains-runner','the Proud'],f:['the Swift','Iron-hoof','the Fierce','Plains-runner','the Proud'],nb:['the Swift','Iron-hoof','Plains-runner']}, clans:null },
+  deep_gnome:  { titles:{m:['the Hidden','Stone-born','Dark-eye','the Silent','of the Deep'],f:['the Hidden','Stone-born','Dark-eye','the Silent','of the Deep'],nb:['the Hidden','Stone-born','Dark-eye']}, clans:null },
+  duergar:     { titles:{m:['the Grey','Iron-Will','Stoneheart','the Bitter','the Joyless'],f:['the Grey','Iron-Will','Stoneheart','the Bitter','the Joyless'],nb:['the Grey','Iron-Will','the Bitter']}, clans:null },
+  earth_genasi:{ titles:{m:['the Grounded','Stone-heart','Earth-sworn','the Steadfast','Boulder-born'],f:['the Grounded','Stone-heart','Earth-sworn','the Steadfast','Boulder-born'],nb:['the Grounded','Stone-heart','the Steadfast']}, clans:{pool:['Granite Lineage','the Stoneblood','House Loam','Clay-Kin'],prefix:'of'} },
+  eladrin:     { titles:{m:["of the Autumn Court","of the Winter Court","of the Spring Court","of the Summer Court",'the Timeless'],f:["of the Autumn Court","of the Winter Court","of the Spring Court","of the Summer Court",'the Timeless'],nb:["of the Autumn Court","of the Winter Court","of the Spring Court","of the Summer Court"]}, clans:{pool:['the Autumn Court','the Winter Court','the Spring Court','the Summer Court','the Twilight Ring'],prefix:'of'} },
+  fairy:       { titles:{m:['the Tiny','Dewdrop','Moonbeam','the Shimmering','Flicker-wing'],f:['the Tiny','Dewdrop','Moonbeam','the Shimmering','Flicker-wing'],nb:['the Tiny','Dewdrop','Moonbeam','the Shimmering']}, clans:{pool:['the Summer Ring','the Dawn Glade','Silverbell Court','Moss-Cap Circle','Twilight Bower'],prefix:'of'} },
+  firbolg:     { titles:{m:['the Old','Root-Speaker','Heartwood','the Gentle','the Vast'],f:['the Old','Root-Speaker','Heartwood','the Gentle','the Vast'],nb:['the Old','Root-Speaker','the Gentle']}, clans:{pool:['the Elder Grove','Ironwood Kin','the Rootbound','Silent Forest Clan'],prefix:'of'} },
+  fire_genasi: { titles:{m:['the Burning','Ember-born','Flameheart','the Smoldering','Torch-sworn'],f:['the Burning','Ember-born','Flameheart','the Smoldering','Torch-sworn'],nb:['the Burning','Ember-born','Flameheart']}, clans:{pool:['the Ember Lineage','House Ignace','the Fireblood','Flame-Kin'],prefix:'of'} },
+  githyanki:   { titles:{m:['Blade of Vlaakith','Silver-sword','Mindbreaker','Astral Knight','Psi-blade'],f:['Blade of Vlaakith','Silver-sword','Mindbreaker','Astral Knight','Psi-blade'],nb:['Blade of Vlaakith','Silver-sword','Mindbreaker']}, clans:{pool:['the Silver Ship','the Far Patrol','Vlaakith\'s Guard','the Astral Host'],prefix:'of'} },
+  githzerai:   { titles:{m:['the Calm','Mind-forged','the Undying','Void-centred','the Serene'],f:['the Calm','Mind-forged','the Undying','Void-centred','the Serene'],nb:['the Calm','Mind-forged','the Undying']}, clans:{pool:['Zerth Cenobium','the Mind-Fortress','the Silent Monastery','Order of the Still Hand'],prefix:'of'} },
+  goblin:      { titles:{m:['the Bold','the Sly','Sharpspear','the Fast','the Lucky'],f:['the Bold','the Sly','Sharpspear','the Fast','the Lucky'],nb:['the Bold','the Sly','the Lucky']}, clans:{pool:['Filthfoot Clan','Sharpspear Tribe','Ragtooth Band','Mudskip Clan','the Grim Mob'],prefix:'of'} },
+  harengon:    { titles:{m:['the Lucky','Quickstep','Farleap','the Lively','the Nimble'],f:['the Lucky','Quickstep','Farleap','the Lively','the Nimble'],nb:['the Lucky','Quickstep','the Nimble']}, clans:null },
+  kalashtar:   { titles:{m:['the Dreaming','Mind-sworn','the Quori-touched','Soul-bound','the Serene'],f:['the Dreaming','Mind-sworn','the Quori-touched','Soul-bound','the Serene'],nb:['the Dreaming','Mind-sworn','the Serene']}, clans:{pool:['the Path of Light','the Dreaming Dark','Adar Monastery','the Bound Ones'],prefix:'of'} },
+  kender:      { titles:{m:['the Curious','the Fearless','Pocketless','the Wanderer','the Brave'],f:['the Curious','the Fearless','Pocketless','the Wanderer','the Brave'],nb:['the Curious','the Fearless','the Wanderer']}, clans:null },
+  kenku:       { titles:{m:['"click-tock"','"the shout"','"wing-tap"','"bell-ring"','"far-call"'],f:['"click-tock"','"the shout"','"wing-tap"','"bell-ring"','"far-call"'],nb:['"click-tock"','"the shout"','"wing-tap"']}, clans:{pool:['East Docks Flock','Shadow-Bell Flock','Copper-Lane Flock','the Silent Wing'],prefix:'of'} },
+  kobold:      { titles:{m:['Scale-shiner','Wyrm-servant','the Brave','the Sneaky','Dragonsworn'],f:['Scale-shiner','Wyrm-servant','the Brave','the Sneaky','Dragonsworn'],nb:['Scale-shiner','the Brave','the Sneaky']}, clans:{pool:['Red Rock Warren','Dragonshrine Warren','Deepvein Warren','Scale-Bright Den','the Dark Burrow'],prefix:'of'} },
+  lizardfolk:  { titles:{m:['the Cold','Swamp-walker','the Patient','River-hunter','the Ancient'],f:['the Cold','Swamp-walker','the Patient','River-hunter','the Ancient'],nb:['the Cold','Swamp-walker','the Patient']}, clans:{pool:['Red River Tribe','Blackwater Band','Marsh-Watcher Clan','the Reed Stalkers','Mudclaw Tribe'],prefix:'of'} },
+  minotaur:    { titles:{m:['Ironhorn','the Labyrinth-born','the Unbroken','Trample-sworn','the Ancient'],f:['Ironhorn','the Labyrinth-born','the Unbroken','Trample-sworn','the Ancient'],nb:['Ironhorn','the Labyrinth-born','the Unbroken']}, clans:{pool:['Labyrinth-Born','the Iron Horn','Herd of Oreskos','the Proud Herd'],prefix:'of'} },
+  owlin:       { titles:{m:['the Scholar','Keen-eye','the Learned','Bookwing','the Watchful'],f:['the Scholar','Keen-eye','the Learned','Bookwing','the Watchful'],nb:['the Scholar','Keen-eye','the Watchful']}, clans:{pool:['Strixhaven Collegium','the Owlbear Kin','the Scholar\'s Nest','the Watchers'],prefix:'of'} },
+  satyr:       { titles:{m:['the Merry','Grape-Singer','the Wild','the Reveler','the Untamed'],f:['the Merry','Grape-Singer','the Wild','the Reveler','the Untamed'],nb:['the Merry','the Wild','the Reveler']}, clans:{pool:['the Merryfoot Revel','Wild-Green Ring','the Sunlit Bacchanal','the Fey-drunk Ring'],prefix:'of'} },
+  sea_elf:     { titles:{m:['the Deepborn','Coralweave','Tidewalker','Wave-caller','the Drowned'],f:['the Deepborn','Coralweave','Tidewalker','Wave-caller','the Drowned'],nb:['the Deepborn','Coralweave','Tidewalker']}, clans:null },
+  shadar_kai:  { titles:{m:['the Grey','Shadow-touched','Void-born','the Pale','the Faded'],f:['the Grey','Shadow-touched','Void-born','the Pale','the Faded'],nb:['the Grey','Shadow-touched','the Faded']}, clans:{pool:['the Shadowfell Kin','House Greymantle','the Raven Queen\'s Court','the Bleak Lineage'],prefix:'of'} },
+  shifter:     { titles:{m:['the Beast','Fang-shown','Blood-scent','the Primal','the Wild'],f:['the Beast','Fang-shown','Blood-scent','the Primal','the Wild'],nb:['the Beast','Fang-shown','the Primal']}, clans:{pool:['the Fullmoon Pack','Iron-Claw Pack','the Wandering Pack','the Feral Band'],prefix:'of'} },
+  tabaxi:      { titles:{m:['the Swift','Claw-dancer','the Curious','the Silent','Far-strider'],f:['the Swift','Claw-dancer','the Curious','the Silent','Far-strider'],nb:['the Swift','Claw-dancer','the Curious']}, clans:{pool:['the Jade Paw Clan','the Silver Whisker Clan','the Ember Claw Clan','the Dusk-Step Clan'],prefix:'of'} },
+  tortle:      { titles:{m:['the Ancient','Shell-bearer','the Patient','the Wise','the Slow'],f:['the Ancient','Shell-bearer','the Patient','the Wise','the Slow'],nb:['the Ancient','Shell-bearer','the Patient']}, clans:{pool:['the Shell-Kin','Old River Clan','the Tide-Walkers','Shoreline Kin'],prefix:'of'} },
+  triton:      { titles:{m:['of the Deep','Wave-caller','Tidewarden','Sea-sworn','the Proud'],f:['of the Deep','Wave-caller','Tidewarden','Sea-sworn','the Proud'],nb:['of the Deep','Wave-caller','Tidewarden']}, clans:{pool:['the Eastern Deeps','the Storm-Trench','the Abyss Ward','the Coral Throne'],prefix:'of'} },
+  water_genasi:{ titles:{m:['the Fluid','Tide-born','the Drowned','Current-sworn','Brine-heart'],f:['the Fluid','Tide-born','the Drowned','Current-sworn','Brine-heart'],nb:['the Fluid','Tide-born','the Drowned']}, clans:{pool:['the Wave Lineage','House Tidal','the Waterblood','Brine-Kin'],prefix:'of'} },
+  yuan_ti:     { titles:{m:['the Pure','Scale-risen','the Cold-blooded','Venom-sworn','the Ancient'],f:['the Pure','Scale-risen','the Cold-blooded','Venom-sworn','the Ancient'],nb:['the Pure','Scale-risen','the Cold-blooded']}, clans:{pool:['House Sithiss','the Pure Blood','the Serpentine Order','the Old Coil'],prefix:'of'} },
+  changeling:  { titles:{m:['the Many-faced','the Unseen','Faceless','the Wanderer','No-One'],f:['the Many-faced','the Unseen','Faceless','the Wanderer','No-One'],nb:['the Many-faced','the Unseen','No-One']}, clans:{pool:['the Shifting Guild','the Faceless Lodge','House None','the Unseen Hand'],prefix:'of'} },
+  khoravar:    { titles:{m:['the Wanderer','Bridge-born','Between-worlds','the Mixed'],f:['the Wanderer','Bridge-born','Between-worlds','the Mixed'],nb:['the Wanderer','Bridge-born','Between-worlds']}, clans:null },
+  warforged:   { titles:{m:['the Unbroken','Still-standing','Battle-worn','the Last','Eternal'],f:['the Unbroken','Still-standing','Battle-worn','the Last','Eternal'],nb:['the Unbroken','Still-standing','Battle-worn']}, clans:{pool:['House Cannith','House Deneith','House Jorasco','House Orien'],prefix:'of'} },
+  astral_elf:  { titles:{m:['Star-touched','of the Silver Void','the Eternal','Void-born','Heaven-scarred'],f:['Star-touched','of the Silver Void','the Eternal','Void-born','Heaven-scarred'],nb:['Star-touched','of the Silver Void','the Eternal']}, clans:{pool:['the Astral Sea','the Divine Crèche','the Silver Host','the Star-Sworn'],prefix:'of'} },
+  autognome:   { titles:{m:['Mk.Final','the Perfected','v.Ultima','the Self-Made','Iteration Last'],f:['Mk.Final','the Perfected','v.Ultima','the Self-Made','Iteration Last'],nb:['Mk.Final','the Perfected','v.Ultima']}, clans:{pool:['House Cannith','House Sivis','the Tinker\'s Guild','the Self-Made'],prefix:'of'} },
+  giff:        { titles:null, clans:{pool:['1st Giff Brigade','the Iron Regiment','Far Trader Corps','the Spelljammer Fleet'],prefix:'of'} },
+  thri_kreen:  { titles:{m:['click-honored','the Mantis','the Fast','click-elder'],f:['click-honored','the Mantis','the Fast','click-elder'],nb:['click-honored','the Mantis']}, clans:{pool:['Red Desert Pack','Amber-Sands Clutch','the Fast-claw Band','Sunbaked Kin'],prefix:'of'} },
+  dhampir:     { titles:{m:['the Half-dead','Nightborn','the Bloodless','the Accursed','the Undying'],f:['the Half-dead','Nightborn','the Bloodless','the Accursed','the Undying'],nb:['the Half-dead','Nightborn','the Undying']}, clans:{pool:['of the Old Blood','House Mordavich','House Ravenscar','the Ancient Line'],prefix:''} },
+  firbolg_wild:{ titles:{m:['the Old','Root-Speaker','Heartwood','the Gentle'],f:['the Old','Root-Speaker','Heartwood','the Gentle'],nb:['the Old','Root-Speaker','the Gentle']}, clans:{pool:['the Elder Grove','Ironwood Kin','the Rootbound'],prefix:'of'} },
+  half_orc:    { titles:null, clans:{pool:['Stonefang Clan','Iron-Blood Kin','the Mixed-Born','the Between'],prefix:'of'} },
+  leonin:      { titles:{m:['of the Golden Mane','the Proud','Sun-mane','the Fierce','Roar-born'],f:['of the Golden Mane','the Proud','Sun-mane','the Fierce','Roar-born'],nb:['of the Golden Mane','the Proud','the Fierce']}, clans:null },
+};
+
+// Species whose generate() already appends title/clan internally (skip double-append)
+const HANDLES_TITLE = new Set(['gnome','goliath','human','orc','hobgoblin','giff','half_orc']);
+const HANDLES_CLAN  = new Set(['dragonborn','dwarf','elf','centaur','deep_gnome','duergar','sea_elf','khoravar','leonin']);
+
+// ═══════════════════════════════════════════════════════
+//  UI LOGIC
+// ═══════════════════════════════════════════════════════
+function onSpeciesChange() {
+  const key = document.getElementById('species-select').value;
+  const sp  = SPECIES[key];
+  if (!sp) return;
+
+  document.getElementById('info-name').textContent   = sp.label;
+  document.getElementById('info-book').textContent   = sp.book;
+  document.getElementById('info-desc').textContent   = sp.description;
+  document.getElementById('info-naming').textContent = sp.namingNote;
+  document.getElementById('species-info').classList.add('visible');
+
+  // All 4 toggles always available — no conditional disabling
+  ['toggle-poetic','toggle-harsh','toggle-title','toggle-clan'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.add('available');
+    el.querySelector('input').disabled = false;
+  });
+}
+
+function setGender(g) {
+  currentGender = g;
+  document.querySelectorAll('.gender-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.gender === g));
+}
+
+// ═══════════════════════════════════════════════════════
+//  GENERATION
+// ═══════════════════════════════════════════════════════
+function generate() {
+  const key = document.getElementById('species-select').value;
+  const sp  = SPECIES[key];
+  if (!sp) return;
+
+  const opts = {
+    poetic: document.getElementById('chk-poetic').checked,
+    harsh:  document.getElementById('chk-harsh').checked,
+    title:  document.getElementById('chk-title').checked,
+    clan:   document.getElementById('chk-clan').checked,
+  };
+
+  const names = [];
+  let attempts = 0;
+  while (names.length < 4 && attempts < 200) {
+    attempts++;
+    try {
+      let name = sp.generate(currentGender, opts);
+
+      // Central title appending (skip for species that handle it themselves)
+      if (opts.title && !HANDLES_TITLE.has(key)) {
+        const ex  = EXTRA[key];
+        const tp  = (ex && ex.titles) ? (ex.titles[currentGender] || ex.titles.nb || UNIVERSAL_TITLES.nb) : (UNIVERSAL_TITLES[currentGender] || UNIVERSAL_TITLES.nb);
+        name += `, ${rand(tp)}`;
+      }
+
+      // Central clan appending (skip for species that handle it themselves)
+      if (opts.clan && !HANDLES_CLAN.has(key)) {
+        const ex  = EXTRA[key];
+        const cp  = (ex && ex.clans) ? ex.clans : UNIVERSAL_CLANS;
+        const pre = cp.prefix !== undefined ? cp.prefix : '';
+        name += pre ? ` ${pre} ${rand(cp.pool)}` : ` ${rand(cp.pool)}`;
+      }
+
+      if (name && !names.includes(name)) names.push(name);
+    } catch(e) { break; }
+  }
+
+  renderNames(names, sp.label);
+}
+
+function renderNames(names, speciesLabel) {
+  const panel = document.getElementById('output-panel');
+  const grid  = document.getElementById('names-grid');
+  document.getElementById('output-label').textContent = `${speciesLabel} Names`;
+  grid.innerHTML = '';
+
+  names.forEach(name => {
+    const safeAttr = name.replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+    const card = document.createElement('div');
+    card.className = 'name-card';
+    card.innerHTML = `
+      <span class="name-text">${name}</span>
+      <span class="name-actions">
+        <button class="action-btn save-btn" title="Save" onclick="saveName(event,'${safeAttr}')">♥</button>
+        <button class="action-btn" title="Copy" onclick="copyName(event,'${safeAttr}',this)">✦</button>
+      </span>`;
+    card.addEventListener('click', e => {
+      if (e.target.classList.contains('action-btn')) return;
+      copyName(e, name, card);
+    });
+    grid.appendChild(card);
+  });
+
+  panel.classList.add('visible');
+}
+
+// ═══════════════════════════════════════════════════════
+//  COPY & SAVE
+// ═══════════════════════════════════════════════════════
+function copyName(e, name, el) {
+  e.stopPropagation();
+  navigator.clipboard.writeText(name).catch(() => {});
+  const card = el.closest ? el.closest('.name-card') : el;
+  const toast = document.createElement('div');
+  toast.className = 'copied-toast';
+  toast.textContent = 'Copied!';
+  card.appendChild(toast);
+  setTimeout(() => toast.remove(), 1350);
+}
+
+function saveName(e, name) {
+  e.stopPropagation();
+  if (!savedNames.includes(name)) {
+    savedNames.push(name);
+    localStorage.setItem('namingTome_saved', JSON.stringify(savedNames));
+    renderSaved();
+  }
+}
+
+function removeSaved(name) {
+  savedNames = savedNames.filter(n => n !== name);
+  localStorage.setItem('namingTome_saved', JSON.stringify(savedNames));
+  renderSaved();
+}
+
+function clearSaved() {
+  savedNames = [];
+  localStorage.setItem('namingTome_saved', JSON.stringify(savedNames));
+  renderSaved();
+}
+
+function renderSaved() {
+  const panel = document.getElementById('saved-panel');
+  const list  = document.getElementById('saved-list');
+  list.innerHTML = '';
+  if (!savedNames.length) { panel.classList.remove('visible'); return; }
+  panel.classList.add('visible');
+  savedNames.forEach(name => {
+    const safe = name.replace(/'/g, "\\'");
+    const tag = document.createElement('div');
+    tag.className = 'saved-tag';
+    tag.innerHTML = `<span>${name}</span><button class="saved-tag-copy" title="Copy" onclick="navigator.clipboard.writeText('${safe}')">✦</button><button class="saved-tag-remove" title="Remove" onclick="removeSaved('${safe}')">✕</button>`;
+    list.appendChild(tag);
+  });
+}
+
+// Init
+onSpeciesChange();
+renderSaved();
+</script>
+</body>
+</html>
